@@ -1,0 +1,31 @@
+# --- Python 缓存 ---
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.pylint.d/
+
+# --- ROS 2 编译产物 ---
+install/
+build/
+log/
+
+# --- 局部配置文件 ---
+.vscode/
+.idea/
+.project
+.pydevproject
+.settings/
+
+# --- 操作系统临时文件 ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# --- 仿真与大模型权重 ---
+# 如果你以后要下载 YOLO 权重（.pt），建议不要传到 Git
+*.pt
+*.onnx
+*.weights

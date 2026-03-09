@@ -1,0 +1,25 @@
+services:
+  amr_sim:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: amr_container
+    network_mode: host
+    environment:
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # 核心挂载：将整个项目目录映射到容器
+      - .:/ros2_ws/src/amr_sim
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true

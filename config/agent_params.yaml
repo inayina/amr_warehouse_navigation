@@ -1,0 +1,4 @@
+agent_node:
+  ros__parameters:
+    model_name: "qwen2.5:0.5b"
+    system_prompt: "You are an AMR diagnostic assistant."
