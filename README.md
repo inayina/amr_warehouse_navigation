@@ -5,7 +5,10 @@ AMR Warehouse Simulation
 
 
 ✅ 已完成功能（阶段一）
+## 🎥 项目演示 (Project Demo)
 
+> **[➔ 点击此处直接查看：演示动画 (GIF)](./narrow.gif)**
+---
 1. 仿真环境
 窄道场景
 worlds/narrow_aisle.world 包含两面墙壁和一个红色障碍物。
