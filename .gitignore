@@ -12,6 +12,7 @@ build/
 log/
 
 # --- 局部配置文件 ---
+.codex
 .vscode/
 .idea/
 .project
@@ -23,9 +24,9 @@ log/
 Thumbs.db
 *.swp
 *~
+/frames_*.gv
+/frames_*.pdf
 
-# --- 仿真与大模型权重 ---
-# 如果你以后要下载 YOLO 权重（.pt），建议不要传到 Git
+# --- 大文件 / 模型权重 ---
 *.pt
 *.onnx
-*.weights

@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot name="my_robot_visual">
+  <link name="base_link">
+    <visual name="base_visual">
+      <origin xyz="0 0 0.16" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.56 0.42 0.18"/>
+      </geometry>
+      <material name="body_blue">
+        <color rgba="0.08 0.46 0.72 1"/>
+      </material>
+    </visual>
+
+    <visual name="top_panel_visual">
+      <origin xyz="0 0 0.265" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.44 0.30 0.03"/>
+      </geometry>
+      <material name="top_panel">
+        <color rgba="0.04 0.10 0.12 1"/>
+      </material>
+    </visual>
+
+    <visual name="left_wheel_visual">
+      <origin xyz="0 0.245 0.075" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.075" length="0.05"/>
+      </geometry>
+      <material name="wheel_black">
+        <color rgba="0.03 0.03 0.03 1"/>
+      </material>
+    </visual>
+
+    <visual name="right_wheel_visual">
+      <origin xyz="0 -0.245 0.075" rpy="1.5708 0 0"/>
+      <geometry>
+        <cylinder radius="0.075" length="0.05"/>
+      </geometry>
+      <material name="wheel_black"/>
+    </visual>
+
+    <visual name="front_castor_visual">
+      <origin xyz="0.23 0 0.035" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.035"/>
+      </geometry>
+      <material name="castor_gray">
+        <color rgba="0.55 0.55 0.55 1"/>
+      </material>
+    </visual>
+
+    <visual name="rear_castor_visual">
+      <origin xyz="-0.23 0 0.035" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.035"/>
+      </geometry>
+      <material name="castor_gray"/>
+    </visual>
+
+    <visual name="lidar_visual">
+      <origin xyz="0.20 0 0.32" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.045" length="0.06"/>
+      </geometry>
+      <material name="lidar_orange">
+        <color rgba="1 0.62 0 1"/>
+      </material>
+    </visual>
+
+    <visual name="marker_pole_visual">
+      <origin xyz="-0.16 0 0.78" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.03" length="1.10"/>
+      </geometry>
+      <material name="marker_red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+
+    <visual name="marker_flag_visual">
+      <origin xyz="0.02 0 1.16" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.36 0.05 0.24"/>
+      </geometry>
+      <material name="marker_yellow">
+        <color rgba="1 1 0 1"/>
+      </material>
+    </visual>
+
+    <visual name="marker_beacon_visual">
+      <origin xyz="-0.16 0 1.40" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.10"/>
+      </geometry>
+      <material name="marker_orange">
+        <color rgba="1 0.35 0 1"/>
+      </material>
+    </visual>
+  </link>
+</robot>

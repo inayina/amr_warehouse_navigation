@@ -1,110 +1,181 @@
-<?xml version="1.0" ?>
 <sdf version="1.8">
-  <world name="warehouse_full">
-    <include>
-      <uri>model://sun</uri>
-    </include>
-    <include>
-      <uri>model://ground_plane</uri>
-    </include>
+  <world name="warehouse_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
 
-    <!-- 地面网格（可选） -->
-    <model name="ground_grid">
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics" />
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands" />
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster" />
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light type="directional" name="sun">
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <direction>-0.4 0.5 -1</direction>
+    </light>
+
+    <scene>
+      <ambient>0.65 0.65 0.65 1</ambient>
+      <background>0.82 0.88 0.94 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <model name="ground_plane">
       <static>true</static>
       <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>24 24</size>
+            </plane>
+          </geometry>
+        </collision>
         <visual name="visual">
           <geometry>
             <plane>
               <normal>0 0 1</normal>
-              <size>100 100</size>
+              <size>24 24</size>
             </plane>
           </geometry>
           <material>
-            <ambient>0.7 0.7 0.7 1</ambient>
-            <diffuse>0.7 0.7 0.7 1</diffuse>
-            <specular>0 0 0 1</specular>
+            <ambient>0.46 0.48 0.48 1</ambient>
+            <diffuse>0.46 0.48 0.48 1</diffuse>
           </material>
         </visual>
       </link>
     </model>
 
-    <!-- 货架 1 -->
-    <model name="shelf_1">
-      <pose>2.0 1.5 0.0 0 0 0</pose>
+    <model name="wall_north">
       <static>true</static>
+      <pose>0 8 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>16 0.22 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>16 0.22 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_south">
+      <static>true</static>
+      <pose>0 -8 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>16 0.22 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>16 0.22 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_east">
+      <static>true</static>
+      <pose>8 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.22 16 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.22 16 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="wall_west">
+      <static>true</static>
+      <pose>-8 0 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.22 16 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.22 16 1.5</size></box></geometry><material><ambient>0.86 0.86 0.82 1</ambient><diffuse>0.86 0.86 0.82 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="loading_zone_visual">
+      <static>true</static>
+      <pose>0 -6.2 0.011 0 0 0</pose>
       <link name="link">
         <visual name="visual">
-          <geometry>
-            <box>
-              <size>1.0 0.5 2.0</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.6 0.6 0.6 1</ambient>
-          </material>
+          <geometry><box><size>4.0 1.2 0.02</size></box></geometry>
+          <material><ambient>0.95 0.78 0.08 1</ambient><diffuse>0.95 0.78 0.08 1</diffuse></material>
         </visual>
-        <collision name="collision">
-          <geometry>
-            <box>
-              <size>1.0 0.5 2.0</size>
-            </box>
-          </geometry>
-        </collision>
       </link>
     </model>
 
-    <!-- 货架 2 -->
-    <model name="shelf_2">
-      <pose>2.0 -1.5 0.0 0 0 0</pose>
+    <model name="start_zone_visual">
       <static>true</static>
+      <pose>0 0 0.012 0 0 0</pose>
       <link name="link">
         <visual name="visual">
-          <geometry>
-            <box>
-              <size>1.0 0.5 2.0</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.6 0.6 0.6 1</ambient>
-          </material>
+          <geometry><box><size>1.4 1.4 0.02</size></box></geometry>
+          <material><ambient>0.05 0.85 0.28 1</ambient><diffuse>0.05 0.85 0.28 1</diffuse></material>
         </visual>
-        <collision name="collision">
-          <geometry>
-            <box>
-              <size>1.0 0.5 2.0</size>
-            </box>
-          </geometry>
-        </collision>
       </link>
     </model>
 
-    <!-- 立柱 -->
-    <model name="pillar_1">
-      <pose>-1.0 0.0 0.5 0 0 0</pose>
+    <include>
+      <uri>model://my_robot</uri>
+      <name>my_robot</name>
+      <pose>0 0 0 0 0 0</pose>
+    </include>
+
+    <model name="rack_outer_left">
       <static>true</static>
+      <pose>-4.0 -1.5 0.75 0 0 0</pose>
       <link name="link">
-        <visual name="visual">
-          <geometry>
-            <cylinder>
-              <radius>0.2</radius>
-              <length>1.0</length>
-            </cylinder>
-          </geometry>
-          <material>
-            <ambient>0.8 0.4 0.4 1</ambient>
-          </material>
-        </visual>
-        <collision name="collision">
-          <geometry>
-            <cylinder>
-              <radius>0.2</radius>
-              <length>1.0</length>
-            </cylinder>
-          </geometry>
-        </collision>
+        <collision name="collision"><geometry><box><size>0.8 5.0 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.8 5.0 1.5</size></box></geometry><material><ambient>0.70 0.18 0.14 1</ambient><diffuse>0.70 0.18 0.14 1</diffuse></material></visual>
       </link>
     </model>
 
-    <!-- 更多障碍物... -->
+    <model name="rack_inner_left">
+      <static>true</static>
+      <pose>-1.55 2.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.8 5.0 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.8 5.0 1.5</size></box></geometry><material><ambient>0.76 0.46 0.13 1</ambient><diffuse>0.76 0.46 0.13 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="rack_inner_right">
+      <static>true</static>
+      <pose>1.55 2.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.8 5.0 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.8 5.0 1.5</size></box></geometry><material><ambient>0.22 0.48 0.72 1</ambient><diffuse>0.22 0.48 0.72 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="rack_outer_right">
+      <static>true</static>
+      <pose>4.0 -1.5 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.8 5.0 1.5</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.8 5.0 1.5</size></box></geometry><material><ambient>0.30 0.62 0.26 1</ambient><diffuse>0.30 0.62 0.26 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="charging_station">
+      <static>true</static>
+      <pose>-6.4 -5.8 0.30 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.9 0.9 0.6</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.9 0.9 0.6</size></box></geometry><material><ambient>0.08 0.12 0.72 1</ambient><diffuse>0.08 0.12 0.72 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="packing_station">
+      <static>true</static>
+      <pose>6.2 -4.8 0.45 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.2 0.7 0.9</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.2 0.7 0.9</size></box></geometry><material><ambient>0.45 0.26 0.12 1</ambient><diffuse>0.45 0.26 0.12 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <model name="landmark_pillar">
+      <static>true</static>
+      <pose>5.8 5.6 0.75 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.25</radius><length>1.5</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.25</radius><length>1.5</length></cylinder></geometry><material><ambient>0.88 0.88 0.88 1</ambient><diffuse>0.88 0.88 0.88 1</diffuse></material></visual>
+      </link>
+    </model>
   </world>
 </sdf>

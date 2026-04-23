@@ -2,7 +2,7 @@
 <package format="3">
   <name>amr_warehouse_sim</name>
   <version>0.0.1</version>
-  <description>AMR warehouse simulation</description>
+  <description>AMR warehouse simulation with Gazebo, Lidar, TF, and SLAM Toolbox</description>
   <maintainer email="ina@example.com">ina</maintainer>
   <license>MIT</license>
 
@@ -10,10 +10,17 @@
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
-  <depend>vision_msgs</depend>
-  <depend>cv_bridge</depend>
-  <depend>ros_gz_sim</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>tf2_ros</depend>
+
+  <depend>ros_gz_sim</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>robot_state_publisher</depend>
+  <depend>rviz2</depend>
+
+  <depend>slam_toolbox</depend>
 
   <export>
     <build_type>ament_python</build_type>

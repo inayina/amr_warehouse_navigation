@@ -1,0 +1,4 @@
+detector_node:
+  ros__parameters:
+    conf_threshold: 0.5
+    image_topic: "/camera/image_raw"
