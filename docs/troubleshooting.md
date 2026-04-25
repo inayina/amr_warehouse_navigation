@@ -1,6 +1,6 @@
-# V1 Troubleshooting
+# AMR Warehouse Troubleshooting
 
-本文件只记录当前 V1 主线的排障顺序：Gazebo、机器人模型、运动控制、`/scan`、TF、SLAM。
+本文件记录当前 V1 建图链路和 V2 Nav2 主线链路的排障顺序：Gazebo、机器人模型、运动控制、`/scan`、`/scan_filtered`、TF、SLAM、地图文件、Nav2 localization、planner / controller / goal 执行。
 
 ## 1. 确认机器人加载
 
@@ -64,7 +64,31 @@ ros2 topic hz /scan
 </plugin>
 ```
 
-## 5. 确认 TF
+## 5. 确认 `/scan_filtered`
+
+当前建图使用 ROS 现成包 `laser_filters` 过滤 LaserScan：
+
+```text
+/scan -> scan_to_scan_filter_chain -> /scan_filtered -> slam_toolbox
+```
+
+检查滤波输出：
+
+```bash
+ros2 node list | grep scan_to_scan_filter_chain
+ros2 topic list | grep '^/scan_filtered$'
+ros2 topic echo /scan_filtered --once
+ros2 topic hz /scan_filtered
+```
+
+如果 `/scan` 正常但 `/scan_filtered` 不存在，优先检查：
+
+- 是否安装 `ros-jazzy-laser-filters`
+- `config/laser_filters.yaml` 是否安装到 share 目录
+- `launch/slam.launch.py` 是否启动了 `laser_filters/scan_to_scan_filter_chain`
+- 终端是否有 filter plugin 加载失败日志
+
+## 6. 确认 TF
 
 ```bash
 ros2 run tf2_ros tf2_echo odom base_link
@@ -79,16 +103,16 @@ map -> odom -> base_link -> my_robot/lidar_link/lidar
 
 如果 `odom -> base_link` 不存在，检查 `odom_tf_node` 是否启动，以及 `/odom` 是否有数据。
 
-## 6. 确认 SLAM
+## 7. 确认 SLAM
 
 ```bash
 ros2 node list | grep slam
 ros2 lifecycle get /slam_toolbox
-ros2 node info /slam_toolbox | grep -E '/scan|/map'
+ros2 node info /slam_toolbox | grep -E '/scan_filtered|/map'
 ros2 topic list | grep '^/map$'
 ```
 
-`slam_toolbox` 应为 `active [3]`，并且应订阅 `/scan`、发布 `/map`。
+`slam_toolbox` 应为 `active [3]`，并且应订阅 `/scan_filtered`、发布 `/map`。
 
 如果是 `unconfigured [1]`，当前 launch 没有正确激活 SLAM。可临时手动激活：
 
@@ -97,9 +121,138 @@ ros2 lifecycle set /slam_toolbox configure
 ros2 lifecycle set /slam_toolbox activate
 ```
 
-RViz Fixed Frame 使用 `map`。机器人运动后，地图应随 `/scan` 数据逐步更新。
+RViz Fixed Frame 使用 `map`。机器人运动后，地图应随 `/scan_filtered` 数据逐步更新。
 
-## 7. 地图杂乱
+## 8. 确认已保存地图
+
+当前 Nav2 推荐使用：
+
+```text
+maps/warehouse.yaml
+```
+
+确认文件存在：
+
+```bash
+test -f ~/ros2_ws/src/amr_warehouse_sim/maps/warehouse.yaml
+test -f ~/ros2_ws/src/amr_warehouse_sim/maps/warehouse_slam.pgm
+```
+
+确认 `warehouse.yaml` 指向正确图像：
+
+```bash
+cat ~/ros2_ws/src/amr_warehouse_sim/maps/warehouse.yaml
+```
+
+期望包含：
+
+```yaml
+image: warehouse_slam.pgm
+resolution: 0.050
+origin: [-8.008, -8.174, 0]
+```
+
+## 9. Nav2 localization 前置检查
+
+先单独验证 `map_server` 和 localization 是否能读取地图，命令要使用当前主线参数文件：
+
+```bash
+ros2 launch nav2_bringup localization_launch.py \
+  map:=$HOME/ros2_ws/src/amr_warehouse_sim/maps/warehouse.yaml \
+  params_file:=$HOME/ros2_ws/src/amr_warehouse_sim/config/nav2_params.yaml \
+  use_sim_time:=true
+```
+
+检查：
+
+```bash
+ros2 lifecycle get /map_server
+ros2 topic echo /map --once
+ros2 run tf2_ros tf2_echo map odom
+```
+
+当前完整 Nav2 主线入口：
+
+```bash
+ros2 launch amr_warehouse_sim navigation.launch.py
+```
+
+如果使用脚本：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+./scripts/run_navigation.sh
+```
+
+建议再做一次最小闭环验证：
+
+```bash
+ros2 lifecycle get /map_server
+ros2 lifecycle get /amcl
+ros2 lifecycle get /planner_server
+ros2 lifecycle get /controller_server
+ros2 lifecycle get /bt_navigator
+ros2 topic echo /scan_filtered --once
+ros2 run tf2_ros tf2_echo map odom
+```
+
+如果已经通过多次短距离 goal 测试，建议把当前版本视为一版稳定基线，并优先固定这版 `config/nav2_params.yaml`，不要在接 WMS 时同时继续改导航参数。
+
+如果 lifecycle nodes 没有进入 `active [3]`：
+
+- 检查 `navigation.launch.py` 是否正常启动 Nav2 bringup
+- 检查 `config/nav2_params.yaml` 是否可被读取
+- 检查终端里是否有 controller / planner plugin 加载失败日志
+
+如果 RViz 中 RobotModel 不显示：
+
+- 检查 `/robot_description` 是否存在
+- 检查 `launch/navigation.launch.py` 是否启动 `robot_state_publisher`
+- 检查 `rviz/nav2.rviz` 是否仍在订阅错误的旧 topic
+
+如果 short goal 发出后机器人不动：
+
+- 检查 RViz 是否已执行 `2D Pose Estimate`
+- 检查 `map -> odom -> base_link` 是否连通
+- 检查 `/cmd_vel` 是否有输出
+- 检查 local/global costmap 是否把通道整段判成障碍
+- 检查 footprint 是否与当前机器人外廓一致
+- 检查 `collision_monitor` 的 `scan.enabled` 和 `FootprintApproach.enabled` 是否还在误拦车
+
+如果路径能动但明显切角、贴货架、或频繁报 `Failed to make progress`：
+
+- 检查 `progress_checker.required_movement_radius` 是否仍为当前稳定值 `0.10`
+- 检查 `CostCritic.consider_footprint` 是否为 `true`
+- 检查 local/global `inflation_radius` 是否仍为 `0.40`
+- 检查全局规划是否为 `NavfnPlanner + A*`，并且 `allow_unknown: false`
+- 先固定当前导航参数，再继续做重复测试，不要一边接任务层一边继续大改导航
+
+如果 `/map` 没有数据：
+
+- 检查 `maps/warehouse.yaml` 的 `image` 路径
+- 确认 `warehouse_slam.pgm` 和 YAML 在同一目录
+- 确认 `nav2_map_server` 已安装
+
+如果 `map -> odom` 不存在：
+
+- 确认 AMCL 已启动
+- 确认 RViz 已设置 initial pose
+- 确认 `/scan` 正常
+- 确认 `odom -> base_link` 正常
+
+## 10. 当前稳定化结论
+
+当前已经验证有效的 Nav2 稳定化结论如下：
+
+- `odom_tf_node` 需要尽早提供 `odom -> base_link`，避免 controller 在启动阶段因缺 TF 卡住
+- 当前机器人外廓应按矩形 footprint 配置，而不是继续按偏小半径处理
+- `progress_checker.required_movement_radius` 使用 `0.10` 更适合当前仓库短距离 goal
+- `CostCritic.consider_footprint` 需要开启，减少切角和贴障碍
+- local/global `inflation_radius` 收敛到 `0.40` 后，通道可行域更接近当前仓库布局
+- 全局规划使用 `NavfnPlanner + A*` 且 `allow_unknown: false`，路径更适合作为任务点导航基础
+- 当前稳定基线中，`collision_monitor` 的 `scan` 和 `FootprintApproach` 监测项处于关闭状态；后续进入 WMS 或真机前，需要把安全策略单独收口
+
+## 11. 地图杂乱
 
 地图杂乱时，优先排除运行状态污染：
 
@@ -110,11 +263,20 @@ pkill -f "ros2 topic pub.*cmd_vel"
 pkill -f slam_toolbox
 pkill -f rviz2
 pkill -f parameter_bridge
+pkill -f scan_to_scan_filter_chain
 pkill -f odom_tf_node
 pkill -f robot_state_publisher
 pkill -f static_transform_publisher
 pkill -f teleop_twist_keyboard
 pkill -f smoother_server
+pkill -f behavior_server
+pkill -f bt_navigator
+pkill -f waypoint_follower
+pkill -f velocity_smoother
+pkill -f map_server
+pkill -f amcl
+pkill -f controller_server
+pkill -f planner_server
 ```
 
 重新启动后，按小范围闭环建图：

@@ -30,6 +30,7 @@ def generate_launch_description():
 
     world_path = os.path.join(pkg_share, 'worlds', 'warehouse_full.world')
     urdf_path = os.path.join(models_dir, 'my_robot_visual.urdf')
+    laser_filters_params_file = os.path.join(pkg_share, 'config', 'laser_filters.yaml')
     slam_params_file = os.path.join(pkg_share, 'config', 'slam_toolbox.yaml')
     rviz_config = os.path.join(pkg_share, 'rviz', 'slam.rviz')
 
@@ -102,6 +103,21 @@ def generate_launch_description():
         output='screen',
     )
 
+    scan_filter = Node(
+        package='laser_filters',
+        executable='scan_to_scan_filter_chain',
+        name='scan_to_scan_filter_chain',
+        parameters=[
+            laser_filters_params_file,
+            {'use_sim_time': True},
+        ],
+        remappings=[
+            ('scan', '/scan'),
+            ('scan_filtered', '/scan_filtered'),
+        ],
+        output='screen',
+    )
+
     slam = LifecycleNode(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
@@ -110,7 +126,7 @@ def generate_launch_description():
             slam_params_file,
             {
                 'use_sim_time': True,
-                'scan_topic': '/scan',
+                'scan_topic': '/scan_filtered',
                 'base_frame': 'base_link',
                 'odom_frame': 'odom',
                 'map_frame': 'map',
@@ -160,6 +176,7 @@ def generate_launch_description():
             lidar_tf,
             odom_tf,
             robot_state_publisher,
+            scan_filter,
             slam,
             activate_slam,
             configure_slam,

@@ -24,6 +24,9 @@ log/
 Thumbs.db
 *.swp
 *~
+*.log
+frames.gv
+frames.pdf
 /frames_*.gv
 /frames_*.pdf
 

@@ -1,0 +1,30 @@
+scan_to_scan_filter_chain:
+  ros__parameters:
+    filter1:
+      name: range_filter
+      type: laser_filters/LaserScanRangeFilter
+      params:
+        use_message_range_limits: false
+        lower_threshold: 0.10
+        upper_threshold: 10.0
+        lower_replacement_value: .nan
+        upper_replacement_value: .nan
+
+    filter2:
+      name: median_filter
+      type: laser_filters/LaserArrayFilter
+      params:
+        range_filter_chain:
+          filter1:
+            name: median
+            type: filters/MultiChannelMedianFilterFloat
+            params:
+              number_of_observations: 3
+              unused: 10
+        intensity_filter_chain:
+          filter1:
+            name: median
+            type: filters/MultiChannelMedianFilterFloat
+            params:
+              number_of_observations: 3
+              unused: 10

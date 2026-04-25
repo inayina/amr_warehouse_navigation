@@ -7,8 +7,8 @@ slam_toolbox:
     odom_frame: odom
     base_frame: base_link
 
-    scan_topic: /scan
-    max_laser_range: 12.0
+    scan_topic: /scan_filtered
+    max_laser_range: 10.0
 
     mode: mapping
     use_map_saver: true
@@ -27,7 +27,7 @@ slam_toolbox:
     minimum_travel_heading: 0.1
 
     scan_buffer_size: 30
-    scan_buffer_maximum_scan_distance: 12.0
+    scan_buffer_maximum_scan_distance: 10.0
     link_match_minimum_response_fine: 0.1
 
     do_loop_closure: true

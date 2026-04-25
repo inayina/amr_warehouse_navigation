@@ -3,16 +3,16 @@
 set -euo pipefail
 
 # =========================
-# AMR SLAM 一键启动脚本
+# AMR Nav2 一键启动脚本
 # 适用于 ROS2 Jazzy
 # =========================
 
 # ---------- 配置 ----------
 WORKSPACE=~/ros2_ws
 PKG_NAME="amr_warehouse_sim"
-LAUNCH_FILE="${LAUNCH_FILE:-slam.launch.py}"
+LAUNCH_FILE="${LAUNCH_FILE:-navigation.launch.py}"
 
-SESSION="slam"
+SESSION="nav2"
 
 require_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -52,11 +52,21 @@ pkill -f "ros2 topic pub.*cmd_vel"
 pkill -f slam_toolbox
 pkill -f rviz2
 pkill -f parameter_bridge
+pkill -f scan_to_scan_filter_chain
 pkill -f odom_tf_node
 pkill -f robot_state_publisher
 pkill -f static_transform_publisher
 pkill -f teleop_twist_keyboard
+pkill -f map_server
+pkill -f amcl
+pkill -f controller_server
+pkill -f planner_server
 pkill -f smoother_server
+pkill -f behavior_server
+pkill -f bt_navigator
+pkill -f waypoint_follower
+pkill -f velocity_smoother
+pkill -f lifecycle_manager
 
 sleep 2
 
@@ -85,11 +95,11 @@ tmux new-window -t $SESSION:1 -n 'TF_Monitor'
 tmux send-keys -t $SESSION:1 \
 "source /opt/ros/jazzy/setup.bash && source $WORKSPACE/install/setup.bash && sleep 8 && ros2 run tf2_ros tf2_monitor" C-m
 
-# ---------- 窗口3 键盘控制 ----------
-tmux new-window -t $SESSION:2 -n 'Teleop'
+# ---------- 窗口3 Nav2状态 ----------
+tmux new-window -t $SESSION:2 -n 'Nav2_Status'
 
 tmux send-keys -t $SESSION:2 \
-"source /opt/ros/jazzy/setup.bash && source $WORKSPACE/install/setup.bash && ros2 run teleop_twist_keyboard teleop_twist_keyboard" C-m
+"source /opt/ros/jazzy/setup.bash && source $WORKSPACE/install/setup.bash && sleep 10 && watch -n 2 'ros2 lifecycle get /map_server; ros2 lifecycle get /amcl; ros2 lifecycle get /controller_server; ros2 lifecycle get /planner_server'" C-m
 
 # ---------- 窗口4 topic监控 ----------
 tmux new-window -t $SESSION:3 -n 'Topic_Check'
@@ -112,13 +122,13 @@ tmux send-keys -t $SESSION:5 \
 # ---------- 7 进入 tmux ----------
 echo ""
 echo "=============================="
-echo " AMR SLAM 启动完成"
+echo " AMR Nav2 启动完成"
 echo "=============================="
 echo ""
 echo "tmux 窗口:"
 echo "0 Main_Launch"
 echo "1 TF_Monitor"
-echo "2 Teleop"
+echo "2 Nav2_Status"
 echo "3 Topic_Check"
 echo "4 TF_Tree"
 echo "5 ROS2_Doctor"
