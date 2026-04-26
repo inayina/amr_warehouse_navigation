@@ -1,7 +1,5 @@
 # AMR Warehouse Simulation Resume Bullets
 
-这份文档用于整理当前项目可直接复用的中英文简历要点，内容尽量贴合仓库当前真实状态，适合后续按校招、实习、社招或项目介绍场景二次裁剪。
-
 ## 中文版
 
 - 基于 ROS 2 Jazzy 与 Gazebo Harmonic 搭建 AMR 仓库仿真项目，完成从仿真场景、差速机器人模型、激光雷达到 `/cmd_vel`、`/odom`、`/scan`、TF 的基础链路集成。
@@ -18,8 +16,4 @@
 - Tuned navigation behavior for a warehouse aisle environment by refining footprint, inflation, progress checker, MPPI controller, and A* global planning parameters to create a repeatable short-range navigation baseline.
 - Added a foundational `pytest` test structure covering map asset validation, Nav2 configuration regression checks, and launch smoke tests to make the project workflow closer to real engineering practice.
 
-## 使用建议
 
-- 中文简历优先保留 3 到 4 条，突出 ROS 2、Gazebo、SLAM、Nav2 和测试方法。
-- 英文简历可优先使用动词开头版本，例如 Built、Implemented、Set up、Tuned、Added。
-- 如果后续补了 `launch_testing`、bag 回放回归或真机测试，可以继续在这里追加更偏测试工程的 bullet points。
