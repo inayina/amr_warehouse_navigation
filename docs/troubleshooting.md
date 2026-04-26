@@ -227,6 +227,13 @@ ros2 run tf2_ros tf2_echo map odom
 - 检查全局规划是否为 `NavfnPlanner + A*`，并且 `allow_unknown: false`
 - 先固定当前导航参数，再继续做重复测试，不要一边接任务层一边继续大改导航
 
+如果准备试开 `collision_monitor`：
+
+- 不要直接改当前稳定基线 `config/nav2_params.yaml`
+- 先使用 `config/nav2_params_collision_monitor_stage1.yaml` 做第一轮仿真验证
+- 先观察是否正常生成 `collision_monitor_state`，以及 goal 发出后是否仍能及时输出 `/cmd_vel`
+- 如果在正常通道内出现频繁误停，再继续缩小 stop polygon 或延后启用 `FootprintApproach`
+
 如果 `/map` 没有数据：
 
 - 检查 `maps/warehouse.yaml` 的 `image` 路径
@@ -239,6 +246,14 @@ ros2 run tf2_ros tf2_echo map odom
 - 确认 RViz 已设置 initial pose
 - 确认 `/scan` 正常
 - 确认 `odom -> base_link` 正常
+
+如果 `map -> odom` 存在，但冷启动后 LaserScan 和地图要经过 2 到 3 次修正才逐步对齐：
+
+- 先把问题优先归类为 localization / map alignment，不要继续直接调 `collision_monitor`
+- 当前已观察到：保存地图与 Gazebo 世界可能存在约 90 度朝向差异，导致 initial pose 按地图方向设置时，AMCL 需要通过运动后再逐步收敛
+- 如果只是在做演示或短距离验证，优先回退到当前稳定基线 `maps/warehouse.yaml` + `config/nav2_params.yaml`
+- `maps/warehouse_gazebo_aligned_candidate.yaml` 和 `maps/warehouse_slam_gazebo_aligned_candidate.pgm` 当前只作为实验候选，不应视为主线基线
+- 在 localization 冷启动一致性没有收稳前，不建议继续推进 `collision_monitor stage1`、多任务 runtime flow 或更复杂的任务调度验证
 
 ## 10. 当前稳定化结论
 

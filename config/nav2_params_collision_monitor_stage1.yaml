@@ -373,7 +373,7 @@ velocity_smoother:
 
 collision_monitor:
   ros__parameters:
-    enabled: False
+    enabled: True
     base_frame_id: "base_link"
     odom_frame_id: "odom"
     cmd_vel_in_topic: "cmd_vel_smoothed"
@@ -383,9 +383,16 @@ collision_monitor:
     source_timeout: 1.0
     base_shift_correction: True
     stop_pub_timeout: 2.0
-    # Polygons represent zone around the robot for "stop", "slowdown" and "limit" action types,
-    # and robot footprint for "approach" action type.
-    polygons: ["FootprintApproach"]
+    # Stage 1 rollout: use a small front stop zone that starts outside the robot
+    # footprint so we do not immediately stop on near-field/self-adjacent returns.
+    # Keep FootprintApproach disabled until false-positive behavior is understood.
+    polygons: ["PolygonStop"]
+    PolygonStop:
+      type: "polygon"
+      points: "[[0.58, 0.24], [0.58, -0.24], [0.34, -0.24], [0.34, 0.24]]"
+      action_type: "stop"
+      min_points: 4
+      visualize: False
     FootprintApproach:
       type: "polygon"
       action_type: "approach"
@@ -401,7 +408,7 @@ collision_monitor:
       topic: "/scan_filtered"
       min_height: 0.15
       max_height: 2.0
-      enabled: False
+      enabled: True
 
 docking_server:
   ros__parameters:

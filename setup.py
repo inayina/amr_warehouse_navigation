@@ -21,6 +21,39 @@ for install_dir, pattern in asset_patterns:
     if files:
         data_files.append((os.path.join('share', package_name, install_dir), files))
 
+wms_asset_patterns = [
+    ('launch', 'future_extensions/wms_integration/launch/*.py'),
+    (
+        'future_extensions/wms_integration',
+        'future_extensions/wms_integration/README.md',
+    ),
+    (
+        'future_extensions/wms_integration/config',
+        'future_extensions/wms_integration/config/*.json',
+    ),
+    (
+        'future_extensions/wms_integration/scripts',
+        'future_extensions/wms_integration/scripts/*.py',
+    ),
+    (
+        'future_extensions/wms_integration/scripts',
+        'future_extensions/wms_integration/scripts/*.sh',
+    ),
+    (
+        'future_extensions/wms_integration/task_manager',
+        'future_extensions/wms_integration/task_manager/*.py',
+    ),
+    (
+        'future_extensions/wms_integration/tasks',
+        'future_extensions/wms_integration/tasks/*.json',
+    ),
+]
+
+for install_dir, pattern in wms_asset_patterns:
+    files = sorted(glob(pattern))
+    if files:
+        data_files.append((os.path.join('share', package_name, install_dir), files))
+
 for path in sorted(glob('models/**/*', recursive=True)):
     if os.path.isfile(path):
         data_files.append((os.path.join('share', package_name, os.path.dirname(path)), [path]))
@@ -38,6 +71,7 @@ setup(
     entry_points={
         'console_scripts': [
             'odom_tf_node = amr_warehouse_sim.odom_tf_node:main',
+            'mock_wms_runner = amr_warehouse_sim.mock_wms_runner:main',
         ],
     },
 )

@@ -1,0 +1,43 @@
+{
+  "queue_name": "demo_single_robot_queue",
+  "robot_name": "my_robot",
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "type": "move_item_mock",
+      "description": "Scene-aligned transfer through the south corridor from the loading approach lane to the east staging lane.",
+      "steps": [
+        {
+          "waypoint": "dock_a",
+          "action": "pickup_face",
+          "pause_sec": 1.0
+        },
+        {
+          "waypoint": "buffer_1",
+          "action": "transit"
+        },
+        {
+          "waypoint": "staging_1",
+          "action": "dropoff_face",
+          "pause_sec": 1.0
+        }
+      ]
+    },
+    {
+      "task_id": "TASK-002",
+      "type": "inspection_mock",
+      "description": "Short east-aisle inspection stop followed by a return to dock_a.",
+      "steps": [
+        {
+          "waypoint": "inspection_point",
+          "action": "inspection_hold",
+          "pause_sec": 2.0
+        },
+        {
+          "waypoint": "dock_a",
+          "action": "return_to_dock"
+        }
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # AI 协作约束
 
-本文件用于约束 AI / Coding Agent 在本仓库中的修改范围和工作方式。项目状态与路线图以 `docs/design.md` 为准。
+本文件用于约束 AI / Coding Agent 在本仓库中的修改范围和工作方式。项目状态与当前主线设计以 `docs/design.md` 为准，未来路线图以 `docs/roadmap.md` 为准。
 
 ## 当前项目阶段
 
@@ -121,6 +121,8 @@ V1 已经可以建图并保存地图，后续修改不得破坏：
 - `README.md`
 - `AGENTS.md`
 - `docs/design.md`
+- `docs/future_architecture.md`
+- `docs/roadmap.md`
 - `docs/troubleshooting.md`
 - `package.xml`
 - `setup.py`
@@ -152,6 +154,8 @@ V2 主线文件：
 ## 文档入口
 
 - 当前设计说明：`docs/design.md`
+- 未来架构方向：`docs/future_architecture.md`
+- 项目路线图：`docs/roadmap.md`
 - 排障记录：`docs/troubleshooting.md`
 - 项目入口说明：`README.md`
 - Nav2 地图入口：`maps/warehouse.yaml`

@@ -4,7 +4,7 @@
 
 当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入并稳定在 **V2：Nav2 导航与路径执行**。
 
-最后更新：2026-04-25
+最后更新：2026-04-26
 
 ## 当前功能
 
@@ -55,6 +55,58 @@ x = 0.0, y = 0.0, z = 0.0
 ```
 
 如果需要修改出生点，改 `worlds/warehouse_full.world` 中 `model://my_robot` 的 `<pose>`。
+
+## 测试
+
+仓库现在提供了一个正式的 `test/` 目录，并按更贴近机器人项目实践的层次组织：
+
+- `test/data/`：地图、YAML、Nav2 参数等静态配置回归
+- `test/functional/`：launch 和功能入口 smoke test
+- `test/integration/`：当前已包含导航链路契约测试，后续继续扩展到 topic、TF、lifecycle 链路验证
+- `test/scenarios/`：当前已包含短距离导航和重启后 relocalization 的场景 spec，后续继续扩展到端到端回归
+
+快速运行：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+pytest test -q
+```
+
+如果想按 ROS 2 工作空间方式执行：
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+colcon test --packages-select amr_warehouse_sim
+colcon test-result --verbose
+```
+
+当前已经落地的是：
+
+- `data`：地图和 Nav2 参数回归
+- `functional`：主 launch smoke test
+- `integration`：V2 导航链路契约测试
+- `scenarios`：短距离导航和重启后 relocalization 场景 spec
+
+`test/README.md` 里也写了后续如何继续扩展到 `launch_testing`、runtime integration 和真机回归测试。
+
+如果想分阶段恢复拦车，不要直接改当前稳定基线 `config/nav2_params.yaml`。仓库另外提供了一份阶段 1 候选参数：
+
+```text
+config/nav2_params_collision_monitor_stage1.yaml
+```
+
+这份配置会先启用一个前向 `stop` polygon 和 `/scan_filtered` 检测，适合在仿真里做第一轮误拦车验证；默认主线仍保持关闭拦车项的稳定基线。
+
+## 文档
+
+- 设计说明：[docs/design.md](docs/design.md)
+- 未来架构方向：[docs/future_architecture.md](docs/future_architecture.md)
+- 项目路线图：[docs/roadmap.md](docs/roadmap.md)
+- 排障记录：[docs/troubleshooting.md](docs/troubleshooting.md)
+- 中英文简历要点：[docs/resume-bullets.md](docs/resume-bullets.md)
+- 测试报告模板：[docs/test-report-template.md](docs/test-report-template.md)
+- `collision_monitor` stage1 实验记录：[docs/collision_monitor_stage1_test_report.md](docs/collision_monitor_stage1_test_report.md)
 
 ## 推荐启动：V2 Nav2 稳定基线
 
@@ -296,6 +348,7 @@ ros2 run tf2_tools view_frames
 - 货架环境较对称，AMCL 对 initial pose 和 odom 质量比较敏感
 - footprint 已按仿真模型外廓收敛，但真机仍应按实测尺寸复核
 - 当前稳定基线为了先收敛导航，已关闭 `collision_monitor` 的 `scan` 和 `FootprintApproach` 拦车项；接 WMS 或真机前需要重新标定并恢复安全策略
+- 如果要试开拦车，建议先从 `config/nav2_params_collision_monitor_stage1.yaml` 开始，而不是直接改当前稳定基线
 - recovery、waypoint、docking 等扩展能力尚未做真机验证
 
 ### 接 WMS 前置条件
@@ -349,11 +402,22 @@ amr_warehouse_sim/
 │   ├── run_navigation.sh
 │   ├── run_slam.sh
 │   └── setup.sh
+├── test/
+│   ├── data/
+│   ├── functional/
+│   ├── integration/
+│   └── scenarios/
 ├── docs/
 │   ├── design.md
+│   ├── future_architecture.md
+│   ├── resume-bullets.md
+│   ├── roadmap.md
+│   ├── test-report-template.md
 │   └── troubleshooting.md
 ├── archive/
 ├── future_extensions/
+│   ├── docker/
+│   └── wms_integration/
 ├── AGENTS.md
 └── README.md
 ```
@@ -363,8 +427,9 @@ amr_warehouse_sim/
 ## 归档说明
 
 - `archive/`：历史试验与旧调试资料。
-- `future_extensions/`：后续扩展草稿，不参与 V1 启动。
+- `future_extensions/`：后续扩展与实验目录，不参与当前 V1 / V2 主线启动。
 - `archive/nav2_legacy/`：旧 SLAM-Nav2 试验文件，已不作为当前 V2 入口。
+- `future_extensions/wms_integration/`：测试用途的轻量 mock WMS 最小骨架，用于任务流演示与场景验证。
 - 当前主线不从 `archive/` 或 `future_extensions/` 中加载任何代码。
 
 ## 清理重启
