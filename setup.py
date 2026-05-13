@@ -68,9 +68,11 @@ setup(
     maintainer='ina',
     description='AMR Warehouse Simulation for ROS 2 Jazzy',
     license='MIT',
+    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'odom_tf_node = amr_warehouse_sim.odom_tf_node:main',
+            'publish_initial_pose = amr_warehouse_sim.initial_pose_publisher:main',
             'mock_wms_runner = amr_warehouse_sim.mock_wms_runner:main',
         ],
     },

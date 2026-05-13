@@ -37,8 +37,10 @@ Gazebo World
 
 - V1 建图链路可复现
 - V2 Nav2 导航链路可复现
-- 短距离 goal 可重复成功
-- 测试入口、场景 spec 和验证材料持续完善
+- `publish_initial_pose --preset start_zone` 作为主线 initial pose 入口可复现
+- `config/task_points.yaml` 作为主线固定任务点入口可复现
+- 短距离 goal、fixed-goal 验证和 fresh-session 启动记录持续完善
+- 测试入口、场景 spec、startup stability 记录和验证材料持续完善
 
 ## 3. 架构原则
 
@@ -80,26 +82,39 @@ Gazebo World
 - `test/integration/`
 - `test/scenarios/`
 - `docs/test-report-template.md`
+- `docs/reports/test_report_2026_05_12.md`
+- `docs/reports/repeat_navigation_test_report_2026_05_13.md`
+- `docs/logs/nav2_startup_stability_notes.md`
+- `docs/logs/nav2_startup_stability_log_2026_05_13.md`
+- `docs/reports/wms_task_points_readiness_report_2026_05_13.md`
 
 未来这一层会继续补强：
 
 - runtime integration tests
 - TF / topic / lifecycle 自动检查
+- fresh-session startup readiness 的可重复诊断
 - 场景级回归数据
 - 更正式的测试报告和 defect 记录
 
 ### 4.3 Mock WMS / Task Layer
 
-这一层的目标不是完整 WMS，而是一个**测试驱动的轻量任务层**。
+这一层的目标不是立即扩展完整 WMS，而是在 V2.1 和 V2.2 稳定基线之上，逐步推进一个**测试驱动的轻量任务层**。
 
-当前建议的边界：
+截至 `2026-05-13`，当前已经落地的边界：
 
 - 单机器人
 - 单队列
-- waypoint 别名
-- 顺序任务执行
-- 任务状态流转
-- 结果落盘
+- 固定 map frame 任务点
+- SQLite 最小任务表
+- CLI create / list / init
+- 任务状态流转定义
+
+当前仍未进入主线的部分：
+
+- ROS 2 task executor
+- Nav2 action 真正消费 pending task
+- HTTP / MQTT / 外部调度服务
+- 多机器人或复杂调度
 
 当前对应扩展目录：
 
@@ -111,9 +126,15 @@ Gazebo World
 - 作为 mock 调度层展示系统扩展思路
 - 作为求职时的轻量任务系统样例
 
+继续扩大这一层之前，当前主线仍应进一步收口：
+
+- fresh-session startup stability 的波动边界
+- business points 的 `3~5` 轮重复成功证据
+- 更稳定的运行时基线测试报告和截图材料
+
 ### 4.4 Task API / Integration Layer
 
-这一层只有在 mock WMS 验证稳定后才值得继续推进。
+这一层只有在 mock WMS 数据层和导航侧验证都更稳定后才值得继续推进。
 
 未来可能的方向包括：
 
@@ -128,6 +149,11 @@ Gazebo World
 - 库位管理
 - 数据库持久化
 - 多机器人调度
+
+补充说明：
+
+- SQLite 持久化本身已经在最小数据层里存在
+- 这里“不建议直接推进”的含义是：不要把“已有最小数据层”直接扩写成完整业务系统
 
 ## 5. 推荐未来数据流
 
@@ -164,6 +190,6 @@ Scenario Spec / Mock Task Queue
 
 如果把这个仓库作为作品集或简历项目展示，推荐对外这样描述：
 
-- 当前已经完成：AMR 仿真、SLAM、Nav2、测试分层、场景验证
-- 当前正在推进：runtime integration、场景回归、mock WMS 任务层
-- 当前仍在规划：更正式的任务接口和任务流扩展
+- 当前已经完成：AMR 仿真、SLAM、Nav2、测试分层、自动化测试入口与基线测试报告
+- 当前正在推进：fresh-session startup stability 收口、fixed task points 重复验证、Mock WMS readiness 证据整理
+- 当前仍在规划：ROS 2 task executor、更正式的任务接口与任务流扩展

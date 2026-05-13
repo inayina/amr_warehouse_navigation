@@ -2,9 +2,9 @@
 
 基于 ROS 2 Jazzy 和 Gazebo Harmonic 的 AMR 仓库建图与导航仿真项目。
 
-当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入并稳定在 **V2：Nav2 导航与路径执行**。
+当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。
 
-最后更新：2026-04-26
+最后更新：2026-05-13
 
 ## 当前功能
 
@@ -14,11 +14,14 @@
 - ROS-Gazebo bridge：`/cmd_vel`、`/odom`、`/scan`、`/clock`
 - LaserScan 滤波：`laser_filters` 将 `/scan` 处理为 `/scan_filtered`
 - TF 修正节点：`odom_tf_node`
+- 初始位姿工具：`ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone`
 - SLAM Toolbox 在线建图，订阅 `/scan_filtered`，`slam.launch.py` 会自动 configure / activate
 - Nav2 导航入口：`navigation.launch.py` 使用 `maps/warehouse.yaml` 和 `config/nav2_params.yaml`
+- 固定任务点入口：`config/task_points.yaml`
+- 最小 Mock WMS 数据层入口：`scripts/init_mock_wms_db.py`、`scripts/create_mock_task.py`、`scripts/list_mock_tasks.py`
 - RViz 配置：`rviz/slam.rviz` 用于建图，`rviz/nav2.rviz` 用于导航
 - 已保存地图：`maps/warehouse.yaml`、`maps/warehouse_slam.pgm`
-- 当前阶段：以 `navigation.launch.py` + `config/nav2_params.yaml` 作为 V2 稳定基线；下一步是在此基础上整理任务点与 WMS 前置条件
+- 当前阶段：以 `navigation.launch.py` + `config/nav2_params.yaml` 作为 V2 稳定基线；在此基础上已经固定一版任务点配置，并启动最小 Mock WMS 数据层验证
 
 ## 环境要求
 
@@ -62,7 +65,7 @@ x = 0.0, y = 0.0, z = 0.0
 
 - `test/data/`：地图、YAML、Nav2 参数等静态配置回归
 - `test/functional/`：launch 和功能入口 smoke test
-- `test/integration/`：当前已包含导航链路契约测试，后续继续扩展到 topic、TF、lifecycle 链路验证
+- `test/integration/`：当前已包含导航链路契约、mock WMS contract 和 SQLite 数据层回归
 - `test/scenarios/`：当前已包含短距离导航和重启后 relocalization 的场景 spec，后续继续扩展到端到端回归
 
 快速运行：
@@ -81,14 +84,23 @@ colcon test --packages-select amr_warehouse_sim
 colcon test-result --verbose
 ```
 
+截至 `2026-05-13` 的最新本地校验，`pytest test -q` 当前结果为 `25 passed in 0.44s`。`colcon test --packages-select amr_warehouse_sim` 仍应执行同一批自动化 `pytest` 用例。
+
+注意：默认 `colcon test-result --verbose` 会读取当前工作区里已有的测试结果。如果其他包曾经留下历史 JUnit 结果，汇总里可能出现额外的 `skipped`。如果只想查看 `amr_warehouse_sim` 本包结果，建议执行：
+
+```bash
+colcon test-result --verbose --test-result-base build/amr_warehouse_sim
+```
+
 当前已经落地的是：
 
-- `data`：地图和 Nav2 参数回归
-- `functional`：主 launch smoke test
-- `integration`：V2 导航链路契约测试
+- `data`：地图、Nav2 参数、固定任务点配置回归
+- `functional`：主 launch smoke test、`initial_pose_publisher` 功能入口
+- `integration`：V2 导航链路契约、mock WMS contract、mock WMS SQLite 数据层
 - `scenarios`：短距离导航和重启后 relocalization 场景 spec
 
 `test/README.md` 里也写了后续如何继续扩展到 `launch_testing`、runtime integration 和真机回归测试。
+最新一轮基线测试执行记录见 [docs/reports/test_report_2026_05_12.md](docs/reports/test_report_2026_05_12.md)。
 
 如果想分阶段恢复拦车，不要直接改当前稳定基线 `config/nav2_params.yaml`。仓库另外提供了一份阶段 1 候选参数：
 
@@ -100,13 +112,23 @@ config/nav2_params_collision_monitor_stage1.yaml
 
 ## 文档
 
+- 文档索引：[docs/README.md](docs/README.md)
 - 设计说明：[docs/design.md](docs/design.md)
 - 未来架构方向：[docs/future_architecture.md](docs/future_architecture.md)
 - 项目路线图：[docs/roadmap.md](docs/roadmap.md)
 - 排障记录：[docs/troubleshooting.md](docs/troubleshooting.md)
+- 固定任务点说明：[docs/fixed_task_points.md](docs/fixed_task_points.md)
+- Mock WMS 数据层设计：[docs/mock_wms_design.md](docs/mock_wms_design.md)
+- 报告目录：[docs/reports/README.md](docs/reports/README.md)
+- 日志目录：[docs/logs/README.md](docs/logs/README.md)
+- V2.1 基线测试报告：[docs/reports/test_report_2026_05_12.md](docs/reports/test_report_2026_05_12.md)
+- V2.2 重复导航测试报告：[docs/reports/repeat_navigation_test_report_2026_05_13.md](docs/reports/repeat_navigation_test_report_2026_05_13.md)
+- Nav2 fresh-session 启动稳定性说明：[docs/logs/nav2_startup_stability_notes.md](docs/logs/nav2_startup_stability_notes.md)
+- Nav2 fresh-session 启动稳定性日志：[docs/logs/nav2_startup_stability_log_2026_05_13.md](docs/logs/nav2_startup_stability_log_2026_05_13.md)
+- WMS 任务点 readiness 报告：[docs/reports/wms_task_points_readiness_report_2026_05_13.md](docs/reports/wms_task_points_readiness_report_2026_05_13.md)
 - 中英文简历要点：[docs/resume-bullets.md](docs/resume-bullets.md)
 - 测试报告模板：[docs/test-report-template.md](docs/test-report-template.md)
-- `collision_monitor` stage1 实验记录：[docs/collision_monitor_stage1_test_report.md](docs/collision_monitor_stage1_test_report.md)
+- `collision_monitor` stage1 实验记录：[docs/reports/collision_monitor_stage1_test_report.md](docs/reports/collision_monitor_stage1_test_report.md)
 
 ## 推荐启动：V2 Nav2 稳定基线
 
@@ -130,10 +152,16 @@ ros2 launch amr_warehouse_sim navigation.launch.py
 
 启动后按这个顺序做：
 
-1. 等 `map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 进入 `active`
-2. 在 RViz 中点击 `2D Pose Estimate` 设置初始位姿
-3. 发送 1~2 m 的短距离 `Nav2 Goal`
-4. 观察 `/cmd_vel`、local/global costmap 和机器人运动
+1. 先确认 `/map`、`/scan_filtered`、`odom -> base_link` 已经可用
+2. 立即设置初始位姿
+   可以在 RViz 中点击 `2D Pose Estimate`
+   或者在终端执行：
+   `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-subscribers 30`
+3. 再检查 `map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 是否都进入 `active`
+4. 发送 1~2 m 的短距离 `Nav2 Goal`
+5. 观察 `/cmd_vel`、local/global costmap 和机器人运动
+
+补充说明：在 fresh session / headless 复测里，`planner_server` 与 `bt_navigator` 可能需要在 initial pose 注入后才会稳定进入 `active`，所以不要把“先等 5/5 active 再注入 initial pose”当成固定流程。
 
 当前仓库已经完成多次短距离 goal 稳定测试，当前 `navigation.launch.py` + `config/nav2_params.yaml` 可视为一版可复现的 Nav2 稳定基线。后续如果要接 WMS，应优先复用这版导航参数，不要一开始就同时改导航和任务层。
 
@@ -152,12 +180,50 @@ ros2 topic echo /scan_filtered --once
 ros2 run tf2_ros tf2_echo map odom
 ```
 
+如果你希望把 initial pose 设置也纳入更可复现的测试流程，仓库现在提供了一个独立工具：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone
+```
+
+它会向 `/initialpose` 发布 `PoseWithCovarianceStamped`，适合替代手工点击 RViz `2D Pose Estimate`，用于复测或脚本化验证。当前 `start_zone` 预设绑定的是实际仿真场景中的机器人出生点和绿色起始区域中心。
+
+如果是 fresh session / headless 复测，当前更推荐显式等待订阅者：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-subscribers 30
+```
+
 当前建议的通过标准：
 
 - `/map` 正常发布
 - `map -> odom -> base_link` TF 连通
 - RViz 中 RobotModel、LaserScan、Map、Costmap 显示一致
 - 短距离 goal 发出后机器人能稳定输出 `/cmd_vel` 并完成移动
+
+## 固定任务点与 Mock WMS 数据层
+
+当前主线固定任务点入口：
+
+```text
+config/task_points.yaml
+```
+
+当前已经写入的点位包括：
+
+- `start_zone`：当前唯一主线 initial pose 入口
+- `station_a`、`station_b`、`shelf_1`、`shelf_2`：当前主线 candidate business points
+- `candidate_dock_a`：历史候选点，已保留在主线配置中用于补充验证
+
+当前最小 Mock WMS 仍然只是数据层，不直接驱动 Nav2，也不直接控制 `/cmd_vel`。仓库提供了 3 个最小 CLI：
+
+```bash
+python3 scripts/init_mock_wms_db.py
+python3 scripts/create_mock_task.py --target station_a
+python3 scripts/list_mock_tasks.py
+```
+
+这条线当前只用于验证“固定 map frame 点位能否被写成 pending task 并稳定读取”，不等于端到端任务执行已经并入主线。
 
 建议至少做以下重复验证后，再认为当前导航可作为后续功能的基础：
 
@@ -222,6 +288,12 @@ ros2 lifecycle get /map_server
 ros2 lifecycle get /amcl
 ros2 topic echo /map --once
 ros2 run tf2_ros tf2_echo map odom
+```
+
+如果 `map -> odom` 还没有建立，除了在 RViz 里设置 initial pose，也可以直接发布一次：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone
 ```
 
 如果只想启动 Gazebo、机器人和 bridge，不启动 SLAM / Nav2 / RViz：
@@ -375,10 +447,14 @@ ros2 run tf2_tools view_frames
 amr_warehouse_sim/
 ├── amr_warehouse_sim/
 │   ├── __init__.py
+│   ├── initial_pose_publisher.py
+│   ├── mock_wms_runner.py
 │   └── odom_tf_node.py
 ├── config/
 │   ├── laser_filters.yaml
 │   ├── nav2_params.yaml
+│   ├── nav2_params_collision_monitor_stage1.yaml
+│   ├── task_points.yaml
 │   └── slam_toolbox.yaml
 ├── launch/
 │   ├── navigation.launch.py
@@ -399,6 +475,10 @@ amr_warehouse_sim/
 │   ├── warehouse_slam.yaml
 │   └── warehouse_slam.pgm
 ├── scripts/
+│   ├── create_mock_task.py
+│   ├── init_mock_wms_db.py
+│   ├── list_mock_tasks.py
+│   ├── mock_wms_db_common.py
 │   ├── run_navigation.sh
 │   ├── run_slam.sh
 │   └── setup.sh
@@ -408,12 +488,30 @@ amr_warehouse_sim/
 │   ├── integration/
 │   └── scenarios/
 ├── docs/
+│   ├── README.md
 │   ├── design.md
+│   ├── fixed_task_points.md
 │   ├── future_architecture.md
+│   ├── logs/
+│   │   ├── README.md
+│   │   ├── nav2_startup_stability_log_2026_05_13.md
+│   │   ├── nav2_startup_stability_notes.md
+│   │   ├── repeat_navigation_test_log_2026_05_13_round2.md
+│   │   └── repeat_navigation_test_log_2026_05_13_round3.md
+│   ├── mock_wms_design.md
+│   ├── repeat_navigation_test_report.md
+│   ├── reports/
+│   │   ├── README.md
+│   │   ├── collision_monitor_stage1_test_report.md
+│   │   ├── repeat_navigation_test_report_2026_05_13.md
+│   │   ├── test_report_2026_05_12.md
+│   │   └── wms_task_points_readiness_report_2026_05_13.md
 │   ├── resume-bullets.md
 │   ├── roadmap.md
+│   ├── task_points_coordinate_plan.md
 │   ├── test-report-template.md
-│   └── troubleshooting.md
+│   ├── troubleshooting.md
+│   └── ...
 ├── archive/
 ├── future_extensions/
 │   ├── docker/

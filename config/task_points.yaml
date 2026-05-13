@@ -1,0 +1,56 @@
+# Fixed task points for V2.2 repeat-navigation validation.
+# All poses use the map frame.
+# start_zone matches the current initial-pose preset in
+# amr_warehouse_sim/initial_pose_publisher.py.
+# Historical candidate waypoints still exist under
+# future_extensions/wms_integration/config/waypoints.json, but this file only
+# promotes the V2.2 point names that the current mainline will reuse.
+# candidate_dock_a is intentionally kept here as a historical candidate point
+# copied from future_extensions/wms_integration/config/waypoints.json.
+# It is the current best candidate for the first formal fixed goal, but it has
+# not yet completed formal 3-run repeat validation.
+# station_a / station_b / shelf_1 / shelf_2 below use candidate coordinates
+# proposed in docs/task_points_coordinate_plan.md for first real Nav2
+# validation. They are not yet mainline-confirmed business point coordinates.
+
+start_zone:
+  frame_id: map
+  x: 0.0
+  y: 0.0
+  yaw: 0.0
+  description: Initial pose and start area for repeat navigation validation.
+
+station_a:
+  frame_id: map
+  x: -5.3
+  y: -5.8
+  yaw: 3.14
+  description: Candidate station goal from docs/task_points_coordinate_plan.md; charging-station approach for first real validation.
+
+station_b:
+  frame_id: map
+  x: 5.0
+  y: -4.8
+  yaw: 0.0
+  description: Candidate station goal from docs/task_points_coordinate_plan.md; packing-station approach for first real validation.
+
+shelf_1:
+  frame_id: map
+  x: -2.75
+  y: 2.5
+  yaw: 0.0
+  description: Candidate shelf-side goal from docs/task_points_coordinate_plan.md; left inner-rack approach for first real validation.
+
+shelf_2:
+  frame_id: map
+  x: 2.75
+  y: 2.5
+  yaw: 3.14
+  description: Candidate shelf-side goal from docs/task_points_coordinate_plan.md; right inner-rack approach for first real validation.
+
+candidate_dock_a:
+  frame_id: map
+  x: 0.0
+  y: -3.8
+  yaw: -1.57
+  description: Historical candidate point from future_extensions/wms_integration/config/waypoints.json; exploratory passed once and is the current candidate for the first formal fixed task point.

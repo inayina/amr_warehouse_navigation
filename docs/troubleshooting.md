@@ -196,6 +196,22 @@ ros2 topic echo /scan_filtered --once
 ros2 run tf2_ros tf2_echo map odom
 ```
 
+如果你希望把 initial pose 设置也做成可复用的命令，而不是只依赖 RViz 点击，仓库现在提供：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone
+```
+
+这个工具会向 `/initialpose` 发布 `PoseWithCovarianceStamped`，适合用于无人值守复测、重复排障或在 RViz 不方便操作时替代 `2D Pose Estimate`。
+
+如果是 fresh session / headless 复测，当前更推荐：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-subscribers 30
+```
+
+这样可以减少“订阅者尚未就绪就已经开始发布”的偶发波动。
+
 如果已经通过多次短距离 goal 测试，建议把当前版本视为一版稳定基线，并优先固定这版 `config/nav2_params.yaml`，不要在接 WMS 时同时继续改导航参数。
 
 如果 lifecycle nodes 没有进入 `active [3]`：
@@ -213,6 +229,8 @@ ros2 run tf2_ros tf2_echo map odom
 如果 short goal 发出后机器人不动：
 
 - 检查 RViz 是否已执行 `2D Pose Estimate`
+- 或直接执行：
+  `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone`
 - 检查 `map -> odom -> base_link` 是否连通
 - 检查 `/cmd_vel` 是否有输出
 - 检查 local/global costmap 是否把通道整段判成障碍
@@ -244,8 +262,40 @@ ros2 run tf2_ros tf2_echo map odom
 
 - 确认 AMCL 已启动
 - 确认 RViz 已设置 initial pose
+- 或直接发布：
+  `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone`
 - 确认 `/scan` 正常
 - 确认 `odom -> base_link` 正常
+
+## 10. 确认固定任务点配置
+
+当前主线固定任务点入口是：
+
+```text
+config/task_points.yaml
+```
+
+快速检查：
+
+```bash
+sed -n '1,220p' ~/ros2_ws/src/amr_warehouse_sim/config/task_points.yaml
+```
+
+当前期望：
+
+- `start_zone` 存在，且与 `publish_initial_pose --preset start_zone` 对齐
+- `station_a`、`station_b`、`shelf_1`、`shelf_2` 已有实际数值，不再是 `TBD`
+- 所有主线点位都使用 `frame_id: map`
+
+如果你是在排查最小 Mock WMS 数据层，而不是 Nav2 本身，可额外做一个不启动 Gazebo 的数据层 smoke test：
+
+```bash
+python3 ~/ros2_ws/src/amr_warehouse_sim/scripts/init_mock_wms_db.py --db-path /tmp/mock_wms_smoke.db
+python3 ~/ros2_ws/src/amr_warehouse_sim/scripts/create_mock_task.py --db-path /tmp/mock_wms_smoke.db --target station_a
+python3 ~/ros2_ws/src/amr_warehouse_sim/scripts/list_mock_tasks.py --db-path /tmp/mock_wms_smoke.db
+```
+
+如果 `create_mock_task.py` 报目标点不存在或字段仍是 `TBD`，优先检查 `config/task_points.yaml` 是否与当前主线文档一致。
 
 如果 `map -> odom` 存在，但冷启动后 LaserScan 和地图要经过 2 到 3 次修正才逐步对齐：
 

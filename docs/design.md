@@ -23,7 +23,7 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 
 ## 2. 当前阶段状态
 
-当前项目已经完成 **V1：AMR 仿真建图最小闭环**，并进入 **V2：Nav2 导航与路径执行稳定阶段**。
+当前项目已经完成 **V1：AMR 仿真建图最小闭环**，当前主线处于 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。
 
 ### V1 已完成
 
@@ -37,13 +37,13 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 
 ### 当前重点
 
-当前重点不是继续修改 SLAM 主链路，而是冻结一版可复现的 Nav2 稳定基线，为后续任务点和 WMS 接入提供前置能力：
+当前重点不是继续修改 SLAM 主链路，而是保持 Nav2 稳定基线不被破坏，并把 headless 启动、固定任务点和最小任务数据层说明收口：
 
-1. 确认地图文件可被 Nav2 `map_server` 读取
-2. 建立定位链路：`map -> odom -> base_link`
-3. 接入 AMCL 或 Nav2 localization
-4. 稳定 planner / controller 的点到点导航表现
-5. 在稳定导航基础上再定义任务点和最小任务流
+1. 保持 `maps/warehouse.yaml`、`launch/navigation.launch.py`、`config/nav2_params.yaml` 作为稳定入口
+2. 标准化 initial pose handling，明确 `publish_initial_pose --preset start_zone` 的使用时机
+3. 维护 `config/task_points.yaml` 作为主线固定任务点输入
+4. 继续积累 fixed-goal 重复导航证据，并记录 startup stability 波动
+5. 让最小 Mock WMS 数据层只消费固定点位，不反向改 Nav2 主线
 
 ---
 
@@ -89,11 +89,14 @@ Saved Map
 - 仿真启动：`launch/simulation.launch.py`
 - 建图启动：`launch/slam.launch.py`
 - TF 修正节点：`amr_warehouse_sim/odom_tf_node.py`
+- 初始位姿工具：`amr_warehouse_sim/initial_pose_publisher.py`
 - SLAM RViz 配置：`rviz/slam.rviz`
 - Nav2 RViz 配置：`rviz/nav2.rviz`
 - Nav2 地图入口：`maps/warehouse.yaml`
 - Nav2 启动入口：`launch/navigation.launch.py`
 - Nav2 参数文件：`config/nav2_params.yaml`
+- 固定任务点入口：`config/task_points.yaml`
+- 最小 Mock WMS 数据层脚本：`scripts/init_mock_wms_db.py`、`scripts/create_mock_task.py`、`scripts/list_mock_tasks.py`
 - SLAM 原始保存配置：`maps/warehouse_slam.yaml`
 - SLAM 地图图像：`maps/warehouse_slam.pgm`
 
@@ -156,6 +159,9 @@ free_thresh: 0.196
 - `maps/warehouse.yaml` 已可作为 Nav2 地图入口
 - `navigation.launch.py` 已可稳定启动 Nav2 主线
 - 经过多次短距离 goal 测试，当前 Nav2 参数已形成一版稳定基线
+- `publish_initial_pose --preset start_zone` 已成为主线 initial pose 工具入口
+- `config/task_points.yaml` 已固定 `start_zone`、station / shelf candidate points 和 `candidate_dock_a`
+- 最小 Mock WMS SQLite 数据层与 CLI 已建立，但仍停留在“数据层 / pending task”范围
 - 当前路径稳定化主要依赖：更小的 progress checker 阈值、footprint 代价评估、收敛后的 inflation、A* 全局规划
 
 当前注意事项：
@@ -166,6 +172,35 @@ free_thresh: 0.196
 - 旧 SLAM-Nav2 试验文件已移入 `archive/nav2_legacy/`
 - 如果重新建图，只更新 `warehouse_slam.*`，再确认 `warehouse.yaml` 指向正确图像
 - 当前稳定基线为了先收敛导航，临时关闭了 `collision_monitor` 的 `scan` 和 `FootprintApproach` 拦车项；后续进入任务层或真机前需要重新评估安全策略
+
+### 5.1 测试工程化基线
+
+当前测试工程化基线已经补齐，自动化入口与运行时复测入口分工如下：
+
+- 当前包是 `ament_python`，不是 `ament_cmake`
+- `pytest test -q` 与 `colcon test --packages-select amr_warehouse_sim` 已接入同一批自动化 `pytest` 测试
+- 当前通过 `setup.py` 中的 `tests_require=['pytest']` 和 `package.xml` 中的 `pytest` 测试依赖，让 `colcon test` 默认调用 `python3 -m pytest`
+- 以 `2026-05-13` 的最新本地校验为准，`pytest test -q` 当前结果为：`25 passed in 0.44s`
+- 当前自动化覆盖范围包括：map 文件检查、Nav2 配置检查、固定任务点配置检查、launch smoke test、initial pose publisher、navigation pipeline contract、mock WMS contract、mock WMS SQLite data layer
+- `test/scenarios/` 中的场景文档仍然是手工 / spec 流程，不纳入当前自动化执行
+- 默认 `colcon test-result --verbose` 可能汇总整个工作区已有测试结果；如果只查看本包结果，应使用 `colcon test-result --verbose --test-result-base build/amr_warehouse_sim`
+
+补充说明：
+
+- `docs/reports/test_report_2026_05_12.md` 记录的是 `2026-05-12` 当日的真实结果，当时自动化规模还小于当前版本
+- 因此，当前主线说明应以“最新本地校验结果”表达现状，历史测试报告仍保留原始记录，不回写改数
+
+### 5.2 固定任务点与最小任务数据层
+
+截至 `2026-05-13`，当前主线关于 fixed points 和任务数据层的状态如下：
+
+- `start_zone` 是当前唯一主线 initial pose preset
+- `station_a`、`station_b`、`shelf_1`、`shelf_2` 已写入 `config/task_points.yaml`
+- `candidate_dock_a` 保留为历史候选点，用于补充导航验证
+- `docs/reports/repeat_navigation_test_report_2026_05_13.md` 已记录 V2.2 固定任务点与重复导航结果
+- `docs/logs/nav2_startup_stability_notes.md` 与 `docs/logs/nav2_startup_stability_log_2026_05_13.md` 已单独拆出 fresh-session 启动稳定性现象
+- `docs/reports/wms_task_points_readiness_report_2026_05_13.md` 已记录 station / shelf 点位进入 Mock WMS 数据层前的真实导航验证结果
+- 当前 Mock WMS 只做到 SQLite + CLI create/list 的最小数据层，不声明端到端任务执行已经稳定
 
 ---
 
@@ -203,11 +238,21 @@ ros2 run tf2_ros tf2_echo map odom
 推荐先做一个短距离 smoke test，再继续调参数：
 
 1. 启动 `ros2 launch amr_warehouse_sim navigation.launch.py`
-2. 确认 `/map` 正常发布，`/scan_filtered` 正常
-3. 确认 lifecycle nodes 至少包含 `map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator`，并进入 `active`
-4. 在 RViz 中用 `2D Pose Estimate` 设置初始位姿
-5. 发送 1~2 m 的短距离 `Nav2 Goal`
-6. 观察机器人是否输出 `/cmd_vel` 并完成短距离移动
+2. 确认 `/map` 正常发布，`/scan_filtered` 正常，且 `odom -> base_link` TF 可用
+3. 注入初始位姿：
+   手动方式是在 RViz 中使用 `2D Pose Estimate`
+   自动方式是执行 `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone`
+4. 初始位姿应在 `/map`、`/scan_filtered`、`odom -> base_link` 可用后注入
+5. 注入后再检查 `map -> odom` 是否建立，以及 `map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 是否进入 `active`
+6. 发送 1~2 m 的短距离 `Nav2 Goal`
+7. 观察机器人是否输出 `/cmd_vel` 并完成短距离移动
+
+补充说明：
+
+- 对于无界面 / 无人值守复测，若未注入 initial pose，`map -> odom` 不一定建立，`planner_server` / `bt_navigator` 也可能停在 `inactive`
+- 因此，不注入 initial pose 的 headless 测试结果，不能直接判定为“导航功能失败”
+- 当前更准确的工程化要求是：把 initial pose handling 纳入标准验证流程，并控制注入时机
+- 对于 fresh session / headless 复测，当前更推荐使用 `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-subscribers 30`
 
 当前建议的通过标准：
 
@@ -253,16 +298,19 @@ ros2 run tf2_ros tf2_echo map odom
 - footprint 来源于仿真模型尺寸，真机上仍应以实测外廓重新确认
 - 当前稳定基线优先保证导航复现性，未把 `collision_monitor` 作为最终安全策略收口
 - recovery、waypoint、docking 等扩展能力尚未做真机验证
+- 当前 headless / automated runtime validation 依赖标准化的 initial pose 注入；如果未注入 initial pose，AMCL 不一定建立 `map -> odom`，`planner_server` / `bt_navigator` 可能保持 `inactive`
 
 ### 6.5 接 WMS 前的前置条件
 
 当前建议的顺序不是直接开发 WMS，而是先满足以下前提：
 
 1. 固定当前 Nav2 稳定参数，不再与任务层并行改动
-2. 选取一组固定任务点，验证多次重复导航成功
-3. 明确任务系统只下发 map 坐标点，不直接控制 `/cmd_vel`
-4. 明确安全方案：重新标定并恢复 `collision_monitor`，或用外部安全链替代
-5. 再补状态机最小闭环：`待执行 -> 导航中 -> 到达 -> 失败`
+2. 固定 initial pose 注入策略，明确何时使用 RViz `2D Pose Estimate`，何时使用 `publish_initial_pose --preset start_zone`
+3. 固定一组任务点集合，至少包括 `start_zone`、station points、shelf points 等稳定 map frame 点位
+4. 使用固定 initial pose 和固定 goal，继续积累 `3~5` 轮以上的重复导航记录，并区分 `SUCCEEDED`、`ABORTED`、`SKIPPED`
+5. 明确任务系统只负责创建任务并下发 map frame 目标点，不直接控制 `/cmd_vel`，也不修改 Nav2 参数
+6. 明确安全方案：重新标定并恢复 `collision_monitor`，或用外部安全链替代
+7. 状态机先做最小闭环：`pending -> running -> succeeded / failed`
 
 ---
 
@@ -331,7 +379,7 @@ ros2 run tf2_ros tf2_echo map odom
 3. 启动 `map_server` 读取 `maps/warehouse.yaml`
 4. 启动 AMCL 并确认 `map -> odom`
 5. 启动 planner / controller / behavior tree
-6. RViz 设置 initial pose
+6. 在 RViz 或命令行注入 initial pose
 7. 发送 2D Nav Goal 验证导航
 
 当前已达到的基础验收标准：
@@ -339,7 +387,7 @@ ros2 run tf2_ros tf2_echo map odom
 - `/map` 来自已保存地图
 - TF 连通 `map -> odom -> base_link`
 - Nav2 lifecycle nodes 为 active
-- RViz 中可以设置初始位姿和目标点
+- RViz 或 `publish_initial_pose` 均可设置初始位姿
 - 机器人能在仓库地图中完成短距离点到点移动
 
 下一步不再直接扩展 WMS，而是先补：
@@ -349,17 +397,71 @@ ros2 run tf2_ros tf2_echo map odom
 - 安全策略收口
 - 任务状态流接口
 
+### V2.1：测试与运行时基线收口
+
+目标：先把自动化测试入口和运行时导航验证流程收口成统一基线。
+
+工作项：
+
+- `colcon test` 正常发现并执行现有 `pytest`
+- 将 initial pose publisher 纳入导航验证流程
+- 形成 baseline test report
+- 明确 manual validation 与 automated validation 的边界
+
+输出物：
+
+- `pytest` / `colcon test` 双入口自动化回归
+- `docs/reports/test_report_2026_05_12.md`
+- 标准化的 initial pose handling 说明
+
+### V2.2：固定任务点与重复导航验证
+
+目标：在当前稳定 Nav2 基线上，先固定 map frame 输入点位并积累重复导航记录。
+
+当前主线文件：
+
+- `config/task_points.yaml`
+- `docs/fixed_task_points.md`
+- `docs/repeat_navigation_test_report.md`
+
+工作项：
+
+- 维护固定任务点集合
+- 继续为 station / shelf 点位积累更稳定的重复导航证据
+- 使用 initial pose + fixed goals 做 `3~5` 轮以上重复导航
+- 记录成功率、失败原因、`/cmd_vel`、TF、lifecycle 状态
+- 为 V3 Mock WMS 提供稳定的 map frame 任务点输入
+
+当前策略说明：
+
+- `config/task_points.yaml` 已经是主线固定点入口，但 business points 仍应标记为 candidate coordinates
+- `candidate_dock_a` 这类历史候选点可以继续作为补充验证输入，但不能直接等同于“正式固定点长期稳定”
+- V3 当前只启动最小 SQLite 数据层；executor / HTTP / 更完整的任务闭环仍暂缓到后续阶段
+
+输出物：
+
+- `config/task_points.yaml`
+- `docs/fixed_task_points.md`
+- `docs/repeat_navigation_test_report.md`
+- 可供 V3 Mock WMS 消费的稳定 map frame 目标点集合
+
 ### V3：任务系统与上层调度
 
-目标：从单车导航扩展到任务驱动的仓储 AMR 原型。
+目标：在 V2.1 和 V2.2 完成后，再进入任务层与上层调度验证。
 
 候选工作项：
 
-- 简化 WMS 任务接口
-- 任务下发与状态回传
-- 货架点位 / 工位点位管理
-- 多任务队列
-- 简单任务执行状态机
+- SQLite / Mock WMS / HTTP 属于后续任务层
+- 前提是 V2.1 和 V2.2 已完成
+- V3 任务系统只消费固定 map frame 目标点并更新任务状态
+
+V3.0 当前已启动的最小范围：
+
+- 当前只落 SQLite 任务数据层与 CLI create/list，不接 Nav2 action executor
+- 当前只消费 `config/task_points.yaml`，并已允许 `candidate_dock_a` / `dock_a`、`station_a`、`station_b`、`shelf_1`、`shelf_2`
+- Mock WMS 只存储 `map` frame goal 和任务状态，不直接控制 `/cmd_vel`
+- 后续 ROS 2 task executor 才会消费 `pending` task 并发送 Nav2 goal
+- 因 V2.2 仍存在 lifecycle 偶发波动，当前不声明端到端任务执行已完全稳定
 
 ### V4：部署与扩展能力
 
@@ -394,3 +496,18 @@ ros2 run tf2_ros tf2_echo map odom
 - 当前基线：收敛 progress checker、footprint 代价评估、inflation 和 A* 全局规划；为稳定化验证，暂时关闭 `collision_monitor` 拦车项。
 - 下一步：定义固定任务点并整理最小任务流，再评估 WMS 接入。
 - 迁移记录：Nav2 当前入口已从 `future_extensions/navigation` 提升到 `launch/navigation.launch.py`、`config/nav2_params.yaml` 和 `scripts/run_navigation.sh`；旧试验文件归档到 `archive/nav2_legacy/`。
+
+### 2026-05-12
+
+- 恢复旅行后进行 V2 导航基线复测。
+- `pytest` / `colcon test` 集成已修复；当日自动化结果为 `16` 个测试全部通过。
+- 本轮确认：在缺少 initial pose 的 headless 复测中，`/map` 与 `/scan_filtered` 可正常发布，但 `map -> odom` 不一定建立。
+- 本轮进一步确认：执行 `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone` 后，`map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 均可进入 `active`，且 `tf2_echo map odom` 可输出有效变换。
+- 当前结论不是继续“修导航功能”，而是要先标准化 initial pose handling、固定任务点并完成重复导航测试；WMS 暂缓到后续阶段。
+
+### 2026-05-13
+
+- 当前主线文档已统一到 fixed task points、repeat navigation、startup stability 和 WMS data-layer readiness 的最新状态。
+- 最新本地自动化校验结果为 `pytest test -q -> 25 passed in 0.44s`。
+- `config/task_points.yaml`、`publish_initial_pose` 和最小 Mock WMS 数据层说明已经补齐到 README / design / roadmap 主线文档。
+- 当前对外口径应表述为：Nav2 稳定基线已经建立，fixed task points 和最小任务数据层已经落地，但 fresh-session startup stability 与 business point repeat success 仍在继续收口。
