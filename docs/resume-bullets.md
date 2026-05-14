@@ -17,3 +17,18 @@
 - Added a foundational `pytest` test structure covering map asset validation, Nav2 configuration regression checks, and launch smoke tests to make the project workflow closer to real engineering practice.
 
 
+## 最近（2026-05）
+
+- 合并 Mock WMS 到 `amr_warehouse_sim`，并将 legacy `scripts/` 转为兼容 shim。
+- 实现 HTTP Mock WMS executor 与 FastAPI API（任务创建/查询/状态回写）。
+- 编写集成契约测试覆盖 executor、runner 与 HTTP API，本地验证通过（63 passed）。
+- 添加 GitHub Actions CI：在 push/PR 上运行 `make test`；补充 CI 测试说明文档。
+- 整理 WMS 文档并记录短期扩展计划，保持 Nav2 V2 基线稳定。
+
+## Recent (2026-05)
+
+- Consolidated Mock WMS into `amr_warehouse_sim` and converted legacy `scripts/` into compatibility shims.
+- Implemented an HTTP Mock WMS executor and a FastAPI `mock_wms_api` for task create/list/patch.
+- Added integration and contract tests for executor, runner, and HTTP API (63 tests passed locally).
+- Added GitHub Actions CI to run `make test` on push/PR and a CI test-summary document.
+- Consolidated WMS docs and captured short-term extension notes while keeping the Nav2 V2 baseline stable.

@@ -233,7 +233,7 @@
 
 ## 13. WMS 接入准备补测
 
-同日后续补测详见 [docs/reports/wms_task_points_readiness_report_2026_05_13.md](./wms_task_points_readiness_report_2026_05_13.md)。
+同日后续補測詳見 [docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md](../wms/reports/wms_task_points_readiness_report_2026_05_13.md)。
 
 本次补测使用更长的 lifecycle 确认窗口，并坚持 fresh session + `start_zone` 初始位姿 + 完整前置条件后才发送 goal。`station_a`、`station_b`、`shelf_1`、`shelf_2` 均已拿到至少一次真实 `SUCCEEDED`，并完成 Mock WMS pending task 创建验证。
 

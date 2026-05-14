@@ -1,6 +1,8 @@
 import importlib.util
 import math
 
+import pytest
+
 
 def _load_module(module_path, module_name):
     spec = importlib.util.spec_from_file_location(module_name, module_path)
@@ -10,11 +12,17 @@ def _load_module(module_path, module_name):
     return module
 
 
-def test_initial_pose_parser_defaults(repo_root):
-    module = _load_module(
+def _load_initial_pose_module(repo_root):
+    pytest.importorskip('geometry_msgs')
+    pytest.importorskip('rclpy')
+    return _load_module(
         repo_root / 'amr_warehouse_sim' / 'initial_pose_publisher.py',
         'initial_pose_publisher',
     )
+
+
+def test_initial_pose_parser_defaults(repo_root):
+    module = _load_initial_pose_module(repo_root)
 
     parser = module.create_parser()
     args = module.resolve_pose_args(
@@ -33,10 +41,7 @@ def test_initial_pose_parser_defaults(repo_root):
 
 
 def test_initial_pose_preset_resolves_to_start_zone(repo_root):
-    module = _load_module(
-        repo_root / 'amr_warehouse_sim' / 'initial_pose_publisher.py',
-        'initial_pose_publisher',
-    )
+    module = _load_initial_pose_module(repo_root)
 
     parser = module.create_parser()
     args = module.resolve_pose_args(
@@ -50,10 +55,7 @@ def test_initial_pose_preset_resolves_to_start_zone(repo_root):
 
 
 def test_build_initial_pose_message_sets_pose_and_covariance(repo_root):
-    module = _load_module(
-        repo_root / 'amr_warehouse_sim' / 'initial_pose_publisher.py',
-        'initial_pose_publisher',
-    )
+    module = _load_initial_pose_module(repo_root)
 
     msg = module.build_initial_pose_message(
         x=1.25,

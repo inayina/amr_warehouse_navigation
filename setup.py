@@ -14,6 +14,7 @@ asset_patterns = [
     ('rviz', 'rviz/*.rviz'),
     ('worlds', 'worlds/*.world'),
     ('maps', 'maps/*'),
+    ('scripts', 'scripts/*.py'),
 ]
 
 for install_dir, pattern in asset_patterns:
@@ -63,7 +64,7 @@ setup(
     version='0.0.1',
     packages=find_packages(exclude=['test', 'archive*', 'future_extensions*']),
     data_files=data_files,
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'fastapi', 'uvicorn'],
     zip_safe=True,
     maintainer='ina',
     description='AMR Warehouse Simulation for ROS 2 Jazzy',
@@ -73,7 +74,12 @@ setup(
         'console_scripts': [
             'odom_tf_node = amr_warehouse_sim.odom_tf_node:main',
             'publish_initial_pose = amr_warehouse_sim.initial_pose_publisher:main',
-            'mock_wms_runner = amr_warehouse_sim.mock_wms_runner:main',
+            'init_mock_wms_db = amr_warehouse_sim.init_mock_wms_db:main',
+            'create_mock_task = amr_warehouse_sim.create_mock_task:main',
+            'list_mock_tasks = amr_warehouse_sim.list_mock_tasks:main',
+            'mock_wms_api = amr_warehouse_sim.mock_wms_api:main',
+            'mock_wms_executor = amr_warehouse_sim.mock_wms_executor:main',
+            'mock_wms_task_runner = amr_warehouse_sim.mock_wms_task_runner:main',
         ],
     },
 )

@@ -1,6 +1,21 @@
-# Mock WMS Minimum Viable Version
+# Legacy Mock WMS Minimum Viable Version
 
 这个目录提供一个不接入当前 V2 主线的轻量 `mock WMS` 最小可用版本，用来支持测试、演示和求职表达。
+
+截至 `2026-05-14`，这套链路保留在 `future_extensions/` 下作为 legacy 扩展参考：
+
+- 保留 waypoint / task queue / JSON report 这类轻量任务流样例
+- 保留多 step 场景回归和展示素材
+- 不再作为当前主线推荐的 `ros2 run` 入口
+
+当前主线推荐入口已经切换到：
+
+- `ros2 run amr_warehouse_sim init_mock_wms_db`
+- `ros2 run amr_warehouse_sim create_mock_task`
+- `ros2 run amr_warehouse_sim list_mock_tasks`
+- `ros2 run amr_warehouse_sim mock_wms_executor`
+- `ros2 run amr_warehouse_sim mock_wms_task_runner`
+- `uvicorn scripts.mock_wms_api:create_app --factory`
 
 它的目标不是做完整 WMS，而是回答这 3 个问题：
 
@@ -105,12 +120,12 @@ queued
 
 ## 运行方式
 
-当前推荐优先使用已经接入包安装的运行入口：
+当前 legacy 链路不再作为主线 `ros2 run amr_warehouse_sim mock_wms_runner` 入口暴露。
 
-- `ros2 run amr_warehouse_sim mock_wms_runner --mode dry-run`
-- `ros2 run amr_warehouse_sim mock_wms_runner --mode execute`
+如果只是想复核这套旧样例，推荐直接运行源码目录里的脚本：
 
-如果只是想在源码目录快速验证，也可以直接运行 `scripts/mock_wms_runner.py`。
+- `python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode dry-run`
+- `python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode execute`
 
 `launch/task_system.launch.py` 现在可以作为一个轻量 dry-run 入口使用：
 
@@ -126,12 +141,6 @@ ros2 launch amr_warehouse_sim task_system.launch.py
 cd ~/ros2_ws
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-ros2 run amr_warehouse_sim mock_wms_runner --mode dry-run
-```
-
-源码目录直跑仍然可用：
-
-```bash
 cd ~/ros2_ws/src/amr_warehouse_sim
 python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode dry-run
 ```
@@ -141,10 +150,10 @@ python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode dry-
 在已经启动 Nav2 并且 `/navigate_to_pose` 可用时，顺序发送任务：
 
 ```bash
-cd ~/ros2_ws
+cd ~/ros2_ws/src/amr_warehouse_sim
 source /opt/ros/jazzy/setup.bash
-source install/setup.bash
-ros2 run amr_warehouse_sim mock_wms_runner --mode execute
+source ~/ros2_ws/install/setup.bash
+python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode execute
 ```
 
 当前默认 `demo_tasks.json` 会执行 2 个 task / 5 个 step：
@@ -159,7 +168,7 @@ ros2 run amr_warehouse_sim mock_wms_runner --mode execute
 如果 action server 名称不是默认值，可以显式指定：
 
 ```bash
-ros2 run amr_warehouse_sim mock_wms_runner --mode execute --action-name /navigate_to_pose
+python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode execute --action-name /navigate_to_pose
 ```
 
 ## 输出结果
@@ -187,7 +196,7 @@ future_extensions/wms_integration/reports/last_run.json
 
 - `test/scenarios/short_goal_navigation_smoke.md`
 - `test/scenarios/restart_relocalization_regression.md`
-- `docs/test-report-template.md`
+- `docs/templates/test-report-template.md`
 
 ## 下一步如何扩展
 

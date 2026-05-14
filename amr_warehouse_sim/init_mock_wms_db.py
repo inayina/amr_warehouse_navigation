@@ -1,0 +1,34 @@
+#!/usr/bin/env python3
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+from .mock_wms_db_common import default_db_path, initialize_database
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description='Initialize the minimal SQLite database for the V3.0 Mock WMS data layer.'
+    )
+    parser.add_argument(
+        '--db',
+        '--db-path',
+        type=Path,
+        default=default_db_path(),
+        dest='db_path',
+        help='SQLite database path. Defaults to data/mock_wms.db under the repo root.',
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    db_path = initialize_database(args.db_path)
+    print(f'[mock_wms_db] Initialized tasks table at: {db_path}')
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

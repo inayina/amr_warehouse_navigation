@@ -37,7 +37,7 @@ test/
 
 - `integration/`
   适合验证链路级联动是否成立，例如 `/scan -> /scan_filtered`、`map -> odom -> base_link`、Nav2 lifecycle 是否进入 `active`。
-  当前已经有两个 focused contract test，后续更适合继续接 `launch_testing` 或仿真集成测试。
+  当前已经有多组 focused contract test，包括导航链路、Mock WMS 数据层、单条 executor 和顺序 task runner；后续更适合继续接 `launch_testing` 或仿真集成测试。
 
 - `scenarios/`
   适合验证面向业务场景的端到端表现，例如短距离 goal、狭窄货架通道导航、重复启停回归。
@@ -45,12 +45,17 @@ test/
 
 ## 运行方式
 
-快速回归：
+从项目根目录快速回归：
 
 ```bash
 cd ~/ros2_ws/src/amr_warehouse_sim
-pytest test -q
+make test
 ```
+
+说明：
+
+- 这条命令已经在 `2026-05-14` 的当前仓库环境中真实跑通，结果为 `63 passed`
+- `make test` 会优先使用项目内 `.venv`，如果 `.venv` 不存在，则使用当前 shell 的 `python3`
 
 按 ROS 2 工作空间方式运行：
 
@@ -78,6 +83,12 @@ colcon test-result --verbose
 - `test/integration/test_mock_wms_contract.py`
   验证 mock WMS 默认资源是否可加载、dry-run 报告结构是否稳定，以及 waypoint / task 的基本约束是否会被正确拦住。
 
+- `test/integration/test_mock_wms_executor_contract.py`
+  验证 V3.1 单条 executor 的状态机、ready gate、dry-run / execute 切换和 SQLite 状态回写约束。
+
+- `test/integration/test_mock_wms_task_runner.py`
+  验证 V3.1 顺序 task runner 的队列消费、失败停止和 continue-on-failure 行为。
+
 - `test/scenarios/short_goal_navigation_smoke.md`
   定义一次短距离导航 smoke test 的目标、步骤、指标、通过标准和证据要求。
 
@@ -93,4 +104,4 @@ colcon test-result --verbose
 - `scenarios/` 后续可以继续补更具体的固定坐标 goal 和多轮成功率统计。
 - `scenarios/` 也适合继续补 mock WMS 驱动的任务回归和报告化验证。
 - 真机或半实物阶段，再把 bag 回放和传感器回归测试逐步接进来。
-- 测试完成后建议配合 `docs/test-report-template.md` 输出一份正式测试报告。
+- 测试完成后建议配合 `docs/templates/test-report-template.md` 输出一份正式测试报告。

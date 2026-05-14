@@ -3,17 +3,33 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
+try:
+    from ament_index_python.packages import PackageNotFoundError, get_package_share_directory
+except ImportError:
+    PackageNotFoundError = None
+    get_package_share_directory = None
+
+
+def _package_share_directory() -> Path | None:
+    if get_package_share_directory is None:
+        return None
+
+    try:
+        return Path(get_package_share_directory('amr_warehouse_sim'))
+    except Exception as exc:
+        if PackageNotFoundError is not None and isinstance(exc, PackageNotFoundError):
+            return None
+        raise
 
 
 def resolve_extension_root():
+    # Legacy bridge kept for the future_extensions demo chain. The current
+    # mainline WMS entrypoints are mock_wms_executor / mock_wms_task_runner.
     candidates = [Path(__file__).resolve().parents[1] / 'future_extensions' / 'wms_integration']
 
-    try:
-        package_share = Path(get_package_share_directory('amr_warehouse_sim'))
+    package_share = _package_share_directory()
+    if package_share is not None:
         candidates.append(package_share / 'future_extensions' / 'wms_integration')
-    except PackageNotFoundError:
-        pass
 
     for candidate in candidates:
         if (candidate / 'task_manager' / 'wms_dispatcher.py').is_file():

@@ -2,9 +2,9 @@
 
 基于 ROS 2 Jazzy 和 Gazebo Harmonic 的 AMR 仓库建图与导航仿真项目。
 
-当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。
+当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入 **V2：Nav2 导航与路径执行**，并在此基础上继续推进 **V2.2：固定任务点与重复导航验证** 与 **V3.1：最小任务执行链路**。
 
-最后更新：2026-05-13
+最后更新：2026-05-14
 
 ## 当前功能
 
@@ -18,10 +18,11 @@
 - SLAM Toolbox 在线建图，订阅 `/scan_filtered`，`slam.launch.py` 会自动 configure / activate
 - Nav2 导航入口：`navigation.launch.py` 使用 `maps/warehouse.yaml` 和 `config/nav2_params.yaml`
 - 固定任务点入口：`config/task_points.yaml`
-- 最小 Mock WMS 数据层入口：`scripts/init_mock_wms_db.py`、`scripts/create_mock_task.py`、`scripts/list_mock_tasks.py`
+- 最小 Mock WMS 数据层与执行链路入口：`ros2 run amr_warehouse_sim init_mock_wms_db`、`create_mock_task`、`list_mock_tasks`、`mock_wms_executor`、`mock_wms_task_runner`
+- 最小 Mock WMS HTTP API 入口：`uvicorn scripts.mock_wms_api:create_app --factory`
 - RViz 配置：`rviz/slam.rviz` 用于建图，`rviz/nav2.rviz` 用于导航
 - 已保存地图：`maps/warehouse.yaml`、`maps/warehouse_slam.pgm`
-- 当前阶段：以 `navigation.launch.py` + `config/nav2_params.yaml` 作为 V2 稳定基线；在此基础上已经固定一版任务点配置，并启动最小 Mock WMS 数据层验证
+- 当前阶段：以 `navigation.launch.py` + `config/nav2_params.yaml` 作为 V2 稳定基线；在此基础上已经固定一版任务点配置，并补上最小 Mock WMS executor / 顺序 runner 验证入口
 
 ## 环境要求
 
@@ -65,15 +66,20 @@ x = 0.0, y = 0.0, z = 0.0
 
 - `test/data/`：地图、YAML、Nav2 参数等静态配置回归
 - `test/functional/`：launch 和功能入口 smoke test
-- `test/integration/`：当前已包含导航链路契约、mock WMS contract 和 SQLite 数据层回归
+- `test/integration/`：当前已包含导航链路契约、mock WMS contract、SQLite 数据层回归，以及 executor / task runner contract
 - `test/scenarios/`：当前已包含短距离导航和重启后 relocalization 的场景 spec，后续继续扩展到端到端回归
 
-快速运行：
+从项目根目录快速运行：
 
 ```bash
 cd ~/ros2_ws/src/amr_warehouse_sim
-pytest test -q
+make test
 ```
+
+说明：
+
+- `make test` 会优先使用本地 `.venv`，如果 `.venv` 不存在，则使用当前 shell 里的 `python3`
+- 如果你的 `python3` 已经直接具备依赖，也可以继续使用 `python3 -m pytest test -q`
 
 如果想按 ROS 2 工作空间方式执行：
 
@@ -84,7 +90,13 @@ colcon test --packages-select amr_warehouse_sim
 colcon test-result --verbose
 ```
 
-截至 `2026-05-13` 的最新本地校验，`pytest test -q` 当前结果为 `25 passed in 0.44s`。`colcon test --packages-select amr_warehouse_sim` 仍应执行同一批自动化 `pytest` 用例。
+截至 `2026-05-14` 的最新本地校验，从项目根目录执行：
+
+```bash
+make test
+```
+
+当前结果为 `63 passed`。`colcon test --packages-select amr_warehouse_sim` 仍应执行同一批自动化 `pytest` 用例。
 
 注意：默认 `colcon test-result --verbose` 会读取当前工作区里已有的测试结果。如果其他包曾经留下历史 JUnit 结果，汇总里可能出现额外的 `skipped`。如果只想查看 `amr_warehouse_sim` 本包结果，建议执行：
 
@@ -96,7 +108,7 @@ colcon test-result --verbose --test-result-base build/amr_warehouse_sim
 
 - `data`：地图、Nav2 参数、固定任务点配置回归
 - `functional`：主 launch smoke test、`initial_pose_publisher` 功能入口
-- `integration`：V2 导航链路契约、mock WMS contract、mock WMS SQLite 数据层
+- `integration`：V2 导航链路契约、mock WMS contract、mock WMS SQLite 数据层、executor / task runner contract
 - `scenarios`：短距离导航和重启后 relocalization 场景 spec
 
 `test/README.md` 里也写了后续如何继续扩展到 `launch_testing`、runtime integration 和真机回归测试。
@@ -118,16 +130,30 @@ config/nav2_params_collision_monitor_stage1.yaml
 - 项目路线图：[docs/roadmap.md](docs/roadmap.md)
 - 排障记录：[docs/troubleshooting.md](docs/troubleshooting.md)
 - 固定任务点说明：[docs/fixed_task_points.md](docs/fixed_task_points.md)
-- Mock WMS 数据层设计：[docs/mock_wms_design.md](docs/mock_wms_design.md)
+- WMS 设计目录：[docs/designs/README.md](docs/designs/README.md)
+- WMS 指南目录：[docs/guides/README.md](docs/guides/README.md)
+- Mock WMS 数据层设计：[docs/designs/mock_wms_design.md](docs/designs/mock_wms_design.md)
+- Mock WMS executor 设计：[docs/designs/mock_wms_executor_design.md](docs/designs/mock_wms_executor_design.md)
+- Mock WMS executor over HTTP 设计：[docs/designs/mock_wms_executor_http_design.md](docs/designs/mock_wms_executor_http_design.md)
+- Mock WMS HTTP API 计划：[docs/designs/mock_wms_http_api_plan.md](docs/designs/mock_wms_http_api_plan.md)
+- Mock WMS HTTP API 验证：[docs/wms/reports/mock_wms_http_api_validation_2026_05_14.md](docs/wms/reports/mock_wms_http_api_validation_2026_05_14.md)
+- Mock WMS HTTP API 手动测试指南：[docs/guides/mock_wms_http_api_manual_test_guide.md](docs/guides/mock_wms_http_api_manual_test_guide.md)
+- Mock WMS CLI / 入口桥接说明：[docs/guides/mock_wms_cli_entrypoints_explained.md](docs/guides/mock_wms_cli_entrypoints_explained.md)
+- Tests & CI summary：[docs/reports/tests_ci_summary_2026_05_14.md](docs/reports/tests_ci_summary_2026_05_14.md)
+- WMS future extensions notes：[docs/future_extensions_wms.md](docs/future_extensions_wms.md)
 - 报告目录：[docs/reports/README.md](docs/reports/README.md)
+- 模板目录：[docs/templates/README.md](docs/templates/README.md)
 - 日志目录：[docs/logs/README.md](docs/logs/README.md)
 - V2.1 基线测试报告：[docs/reports/test_report_2026_05_12.md](docs/reports/test_report_2026_05_12.md)
 - V2.2 重复导航测试报告：[docs/reports/repeat_navigation_test_report_2026_05_13.md](docs/reports/repeat_navigation_test_report_2026_05_13.md)
+- V2.1 / V2.2 收口记录：[docs/reports/v2_validation_closure_2026_05_13.md](docs/reports/v2_validation_closure_2026_05_13.md)
 - Nav2 fresh-session 启动稳定性说明：[docs/logs/nav2_startup_stability_notes.md](docs/logs/nav2_startup_stability_notes.md)
 - Nav2 fresh-session 启动稳定性日志：[docs/logs/nav2_startup_stability_log_2026_05_13.md](docs/logs/nav2_startup_stability_log_2026_05_13.md)
-- WMS 任务点 readiness 报告：[docs/reports/wms_task_points_readiness_report_2026_05_13.md](docs/reports/wms_task_points_readiness_report_2026_05_13.md)
+- WMS 任务点 readiness 报告：[docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md](docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md)
+- Mock WMS executor execute 验证：[docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md](docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md)
+- Mock WMS task runner live 验证：[docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md](docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md)
 - 中英文简历要点：[docs/resume-bullets.md](docs/resume-bullets.md)
-- 测试报告模板：[docs/test-report-template.md](docs/test-report-template.md)
+- 测试报告模板：[docs/templates/test-report-template.md](docs/templates/test-report-template.md)
 - `collision_monitor` stage1 实验记录：[docs/reports/collision_monitor_stage1_test_report.md](docs/reports/collision_monitor_stage1_test_report.md)
 
 ## 推荐启动：V2 Nav2 稳定基线
@@ -201,7 +227,7 @@ ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-s
 - RViz 中 RobotModel、LaserScan、Map、Costmap 显示一致
 - 短距离 goal 发出后机器人能稳定输出 `/cmd_vel` 并完成移动
 
-## 固定任务点与 Mock WMS 数据层
+## 固定任务点与 Mock WMS 任务链
 
 当前主线固定任务点入口：
 
@@ -215,15 +241,57 @@ config/task_points.yaml
 - `station_a`、`station_b`、`shelf_1`、`shelf_2`：当前主线 candidate business points
 - `candidate_dock_a`：历史候选点，已保留在主线配置中用于补充验证
 
-当前最小 Mock WMS 仍然只是数据层，不直接驱动 Nav2，也不直接控制 `/cmd_vel`。仓库提供了 3 个最小 CLI：
+当前最小 Mock WMS 仍然不直接控制 `/cmd_vel`，但已经补上了一条受 ready gate 保护的最小任务执行链。当前可用入口如下：
 
 ```bash
-python3 scripts/init_mock_wms_db.py
-python3 scripts/create_mock_task.py --target station_a
-python3 scripts/list_mock_tasks.py
+ros2 run amr_warehouse_sim init_mock_wms_db
+ros2 run amr_warehouse_sim create_mock_task --target station_a
+ros2 run amr_warehouse_sim list_mock_tasks
+ros2 run amr_warehouse_sim mock_wms_executor --dry-run
+ros2 run amr_warehouse_sim mock_wms_task_runner --execute --max-tasks 2
 ```
 
-这条线当前只用于验证“固定 map frame 点位能否被写成 pending task 并稳定读取”，不等于端到端任务执行已经并入主线。
+当前最小 Mock WMS HTTP API 也已经接回主线，目前已经覆盖任务创建、查询和最小状态回写：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+source .venv/bin/activate
+uvicorn scripts.mock_wms_api:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+最小 `curl` 示例：
+
+```bash
+curl --noproxy '*' -sS http://127.0.0.1:8000/health
+curl --noproxy '*' -sS -X POST http://127.0.0.1:8000/tasks \
+  -H 'Content-Type: application/json' \
+  -d '{"target_name":"station_a","task_name":"readme-http-task"}'
+curl --noproxy '*' -sS http://127.0.0.1:8000/tasks
+curl --noproxy '*' -sS http://127.0.0.1:8000/tasks/1
+curl --noproxy '*' -sS -X PATCH http://127.0.0.1:8000/tasks/1/status \
+  -H 'Content-Type: application/json' \
+  -d '{"status":"running","status_reason":"HTTP executor claimed the task."}'
+```
+
+当前边界说明：
+
+- `mock_wms_executor`
+  一次只处理最早一条 `pending` task；`--dry-run` 只检查 ready gate，不会发送 `/navigate_to_pose` goal；`--execute` 会在 ready gate 满足后才发送 goal。
+- `mock_wms_task_runner`
+  在 execute 模式下顺序消费 SQLite `pending` 队列；dry-run 仍然只检查最早一条任务，不会假装消费队列，也不会发送 goal。
+- `mock_wms_api`
+  当前负责 `GET /health`、`POST /tasks`、`GET /tasks`、`GET /tasks/{task_id}`、`PATCH /tasks/{task_id}/status`，只暴露 SQLite Mock WMS 数据层与最小状态回写边界，不接 Nav2 execute，不提供完整调度能力。
+- `mock_wms_executor --api-base-url ...`
+  当前会通过 HTTP 拉取最早一条 `pending` task；dry-run 会做本地模拟并回写 `running -> succeeded`，`--execute` 会在 ready gate 满足后通过 Nav2 发送 `/navigate_to_pose`，并继续通过 HTTP 回写 `running -> succeeded / failed`。
+- 这条线已经属于当前主线的 V3.1 验证入口，但仍不是完整 WMS、多机器人调度系统，也没有 MQTT / WebSocket / Web 后台。
+
+截至 `2026-05-13` 的 live ROS / Nav2 顺序任务验证，fresh session 中已经确认：
+
+- `ros2 run amr_warehouse_sim mock_wms_task_runner --db data/mock_wms.db --dry-run` 能通过 ready gate，但不会发送 `/navigate_to_pose` goal。
+- `ros2 run amr_warehouse_sim mock_wms_task_runner --db data/mock_wms.db --execute --max-tasks 1 --ready-timeout 60` 已真实给 `station_a` 发 goal，并拿到 `Goal succeeded`。
+- `ros2 run amr_warehouse_sim mock_wms_task_runner --db data/mock_wms.db --execute --max-tasks 2 --ready-timeout 60` 已顺序跑通 `station_a` 和 `station_b`，SQLite 中对应任务最终都是 `succeeded`，`status_reason` 为 `NavigateToPose result: SUCCEEDED`。
+
+本轮之前的唯一现场差异是 `init_mock_wms_db`、`create_mock_task`、`list_mock_tasks` 还没有统一注册成 `ros2 run` 入口；本轮只做这项 CLI 注册一致性收尾，不改 Nav2 参数、launch、地图、world 或 robot model。
 
 建议至少做以下重复验证后，再认为当前导航可作为后续功能的基础：
 
@@ -447,7 +515,14 @@ ros2 run tf2_tools view_frames
 amr_warehouse_sim/
 ├── amr_warehouse_sim/
 │   ├── __init__.py
+│   ├── create_mock_task.py
 │   ├── initial_pose_publisher.py
+│   ├── init_mock_wms_db.py
+│   ├── list_mock_tasks.py
+│   ├── mock_wms_api.py
+│   ├── mock_wms_db_common.py
+│   ├── mock_wms_executor.py
+│   ├── mock_wms_task_runner.py
 │   ├── mock_wms_runner.py
 │   └── odom_tf_node.py
 ├── config/
@@ -478,14 +553,18 @@ amr_warehouse_sim/
 │   ├── create_mock_task.py
 │   ├── init_mock_wms_db.py
 │   ├── list_mock_tasks.py
+│   ├── mock_wms_api.py
 │   ├── mock_wms_db_common.py
+│   ├── publish_initial_pose.py
 │   ├── run_navigation.sh
+│   ├── run_mock_wms_executor.py
 │   ├── run_slam.sh
 │   └── setup.sh
 ├── test/
 │   ├── data/
 │   ├── functional/
 │   ├── integration/
+│   │   └── test_mock_wms_task_runner.py
 │   └── scenarios/
 ├── docs/
 │   ├── README.md
@@ -498,19 +577,37 @@ amr_warehouse_sim/
 │   │   ├── nav2_startup_stability_notes.md
 │   │   ├── repeat_navigation_test_log_2026_05_13_round2.md
 │   │   └── repeat_navigation_test_log_2026_05_13_round3.md
-│   ├── mock_wms_design.md
-│   ├── repeat_navigation_test_report.md
+│   ├── designs/
+│   │   ├── README.md
+│   │   ├── mock_wms_design.md
+│   │   ├── mock_wms_executor_design.md
+│   │   ├── mock_wms_executor_http_design.md
+│   │   └── mock_wms_http_api_plan.md
+│   ├── guides/
+│   │   ├── README.md
+│   │   ├── mock_wms_cli_entrypoints_explained.md
+│   │   └── mock_wms_http_api_manual_test_guide.md
 │   ├── reports/
 │   │   ├── README.md
 │   │   ├── collision_monitor_stage1_test_report.md
 │   │   ├── repeat_navigation_test_report_2026_05_13.md
+│   │   ├── tests_ci_summary_2026_05_14.md
 │   │   ├── test_report_2026_05_12.md
-│   │   └── wms_task_points_readiness_report_2026_05_13.md
+│   │   └── v2_validation_closure_2026_05_13.md
 │   ├── resume-bullets.md
 │   ├── roadmap.md
 │   ├── task_points_coordinate_plan.md
-│   ├── test-report-template.md
+│   ├── templates/
+│   │   ├── README.md
+│   │   ├── repeat_navigation_test_report.md
+│   │   └── test-report-template.md
 │   ├── troubleshooting.md
+│   ├── wms/
+│   │   └── reports/
+│   │       ├── mock_wms_executor_execute_validation_2026_05_13.md
+│   │       ├── mock_wms_http_api_validation_2026_05_14.md
+│   │       ├── mock_wms_task_runner_live_validation_2026_05_13.md
+│   │       └── wms_task_points_readiness_report_2026_05_13.md
 │   └── ...
 ├── archive/
 ├── future_extensions/

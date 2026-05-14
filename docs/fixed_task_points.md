@@ -58,7 +58,7 @@
   单独整理了 fresh-session 下 lifecycle / action readiness 的波动现象
 - [docs/logs/nav2_startup_stability_log_2026_05_13.md](./logs/nav2_startup_stability_log_2026_05_13.md)
   记录了诊断轮次、READY / NOT_READY 和 diagnostic goal probe 结果
-- [docs/reports/wms_task_points_readiness_report_2026_05_13.md](./reports/wms_task_points_readiness_report_2026_05_13.md)
+- [docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md](./wms/reports/wms_task_points_readiness_report_2026_05_13.md)
   记录了四个 business points 至少一次真实 `SUCCEEDED` 的 WMS readiness 复测
 
 截至 `2026-05-13` 的点位验证结论可简化为：
@@ -105,7 +105,7 @@
 
 记录方式：
 
-- 模板：`docs/repeat_navigation_test_report.md`
+- 模板：`docs/templates/repeat_navigation_test_report.md`
 - 当前主线真实报告：`docs/reports/repeat_navigation_test_report_2026_05_13.md`
 
 当前建议：
@@ -136,4 +136,4 @@
 
 - `start_zone`
 
-对应设计说明见 [docs/mock_wms_design.md](./mock_wms_design.md)。
+对应设计说明见 [docs/designs/mock_wms_design.md](./designs/mock_wms_design.md)。

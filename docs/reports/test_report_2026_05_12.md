@@ -8,7 +8,7 @@
 - 无人值守无界面启动复测
 - 启动早期加入 `/initialpose` 注入的增强复测
 
-它是在现有 `test/` 测试结构和 `docs/test-report-template.md` 模板基础上的补充记录，不改动现有 launch、Nav2 参数、地图和 Gazebo 世界。
+它是在现有 `test/` 测试结构和 `docs/templates/test-report-template.md` 模板基础上的补充记录，不改动现有 launch、Nav2 参数、地图和 Gazebo 世界。
 
 ## 1. 测试目标
 

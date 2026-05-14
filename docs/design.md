@@ -17,13 +17,13 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 
 - 工作空间路径：`~/ros2_ws/src/amr_warehouse_sim/docs/design.md`
 - 仓库相对路径：`docs/design.md`
-- README 引用路径：`[docs/design.md](docs/design.md)`
+- README 引用路径：`docs/design.md`
 
 ---
 
 ## 2. 当前阶段状态
 
-当前项目已经完成 **V1：AMR 仿真建图最小闭环**，当前主线处于 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。
+当前项目已经完成 **V1：AMR 仿真建图最小闭环**，当前主线处于 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。在此基础上，当前主线也已经补上 **V3.2：Mock WMS executor over HTTP** 的最小闭环：HTTP API 已覆盖 create/query/status-writeback，HTTP executor dry-run 可做本地模拟，`--execute` 可在 HTTP 边界内接回 Nav2 execute。
 
 ### V1 已完成
 
@@ -37,13 +37,13 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 
 ### 当前重点
 
-当前重点不是继续修改 SLAM 主链路，而是保持 Nav2 稳定基线不被破坏，并把 headless 启动、固定任务点和最小任务数据层说明收口：
+当前重点不是继续修改 SLAM 主链路，而是保持 Nav2 稳定基线不被破坏，并把 headless 启动、固定任务点和最小任务执行链说明收口：
 
 1. 保持 `maps/warehouse.yaml`、`launch/navigation.launch.py`、`config/nav2_params.yaml` 作为稳定入口
 2. 标准化 initial pose handling，明确 `publish_initial_pose --preset start_zone` 的使用时机
 3. 维护 `config/task_points.yaml` 作为主线固定任务点输入
 4. 继续积累 fixed-goal 重复导航证据，并记录 startup stability 波动
-5. 让最小 Mock WMS 数据层只消费固定点位，不反向改 Nav2 主线
+5. 让最小 Mock WMS 任务链只消费固定点位，不反向改 Nav2 主线
 
 ---
 
@@ -97,6 +97,8 @@ Saved Map
 - Nav2 参数文件：`config/nav2_params.yaml`
 - 固定任务点入口：`config/task_points.yaml`
 - 最小 Mock WMS 数据层脚本：`scripts/init_mock_wms_db.py`、`scripts/create_mock_task.py`、`scripts/list_mock_tasks.py`
+- 最小 Mock WMS HTTP API：`scripts/mock_wms_api.py`、`amr_warehouse_sim/mock_wms_api.py`
+- 最小 Mock WMS 执行入口：`scripts/run_mock_wms_executor.py`、`amr_warehouse_sim/mock_wms_task_runner.py`
 - SLAM 原始保存配置：`maps/warehouse_slam.yaml`
 - SLAM 地图图像：`maps/warehouse_slam.pgm`
 
@@ -161,7 +163,8 @@ free_thresh: 0.196
 - 经过多次短距离 goal 测试，当前 Nav2 参数已形成一版稳定基线
 - `publish_initial_pose --preset start_zone` 已成为主线 initial pose 工具入口
 - `config/task_points.yaml` 已固定 `start_zone`、station / shelf candidate points 和 `candidate_dock_a`
-- 最小 Mock WMS SQLite 数据层与 CLI 已建立，但仍停留在“数据层 / pending task”范围
+- 最小 Mock WMS SQLite 数据层、CLI、executor 与顺序 runner 已建立，已形成受 ready gate 保护的主线最小任务执行验证入口
+- 最小 Mock WMS HTTP API 已建立，当前已覆盖 `health`、任务创建/查询、最小状态回写；HTTP executor dry-run 会本地模拟，`--execute` 会在 ready gate 满足后通过 Nav2 发送 goal，但这仍不是完整 WMS 调度服务
 - 当前路径稳定化主要依赖：更小的 progress checker 阈值、footprint 代价评估、收敛后的 inflation、A* 全局规划
 
 当前注意事项：
@@ -180,8 +183,9 @@ free_thresh: 0.196
 - 当前包是 `ament_python`，不是 `ament_cmake`
 - `pytest test -q` 与 `colcon test --packages-select amr_warehouse_sim` 已接入同一批自动化 `pytest` 测试
 - 当前通过 `setup.py` 中的 `tests_require=['pytest']` 和 `package.xml` 中的 `pytest` 测试依赖，让 `colcon test` 默认调用 `python3 -m pytest`
-- 以 `2026-05-13` 的最新本地校验为准，`pytest test -q` 当前结果为：`25 passed in 0.44s`
+- 以 `2026-05-14` 的最新本地校验为准，从项目根目录执行 `make test` 的结果为：`63 passed`
 - 当前自动化覆盖范围包括：map 文件检查、Nav2 配置检查、固定任务点配置检查、launch smoke test、initial pose publisher、navigation pipeline contract、mock WMS contract、mock WMS SQLite data layer
+- 当前自动化覆盖范围还包括：Mock WMS HTTP API 的 `health / create / list / get` 集成契约
 - `test/scenarios/` 中的场景文档仍然是手工 / spec 流程，不纳入当前自动化执行
 - 默认 `colcon test-result --verbose` 可能汇总整个工作区已有测试结果；如果只查看本包结果，应使用 `colcon test-result --verbose --test-result-base build/amr_warehouse_sim`
 
@@ -190,17 +194,20 @@ free_thresh: 0.196
 - `docs/reports/test_report_2026_05_12.md` 记录的是 `2026-05-12` 当日的真实结果，当时自动化规模还小于当前版本
 - 因此，当前主线说明应以“最新本地校验结果”表达现状，历史测试报告仍保留原始记录，不回写改数
 
-### 5.2 固定任务点与最小任务数据层
+### 5.2 固定任务点与最小任务执行链
 
-截至 `2026-05-13`，当前主线关于 fixed points 和任务数据层的状态如下：
+截至 `2026-05-14`，当前主线关于 fixed points、最小任务执行链和最小 HTTP API 的状态如下：
 
 - `start_zone` 是当前唯一主线 initial pose preset
 - `station_a`、`station_b`、`shelf_1`、`shelf_2` 已写入 `config/task_points.yaml`
 - `candidate_dock_a` 保留为历史候选点，用于补充导航验证
 - `docs/reports/repeat_navigation_test_report_2026_05_13.md` 已记录 V2.2 固定任务点与重复导航结果
 - `docs/logs/nav2_startup_stability_notes.md` 与 `docs/logs/nav2_startup_stability_log_2026_05_13.md` 已单独拆出 fresh-session 启动稳定性现象
-- `docs/reports/wms_task_points_readiness_report_2026_05_13.md` 已记录 station / shelf 点位进入 Mock WMS 数据层前的真实导航验证结果
-- 当前 Mock WMS 只做到 SQLite + CLI create/list 的最小数据层，不声明端到端任务执行已经稳定
+- `docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md` 已记录 station / shelf 点位进入 Mock WMS 数据层前的真实导航验证结果
+- `docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md` 已记录 fresh session 内 ready gate / discovery 波动对单次 execute 的影响
+- `docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md` 已记录 `mock_wms_task_runner` 的 dry-run、单条 execute 和 `station_a -> station_b` 顺序 execute 真实 `SUCCEEDED` 结果
+- `docs/wms/reports/mock_wms_http_api_validation_2026_05_14.md` 已记录最小 HTTP API 的 `uvicorn + curl` 真实验证结果
+- 当前 Mock WMS 已形成 SQLite + CLI + executor / task_runner + HTTP create/query 的最小闭环，但这仍不是完整 WMS / 多机器人调度系统，也不声明端到端任务执行已经完全稳定
 
 ---
 
@@ -422,7 +429,7 @@ ros2 run tf2_ros tf2_echo map odom
 
 - `config/task_points.yaml`
 - `docs/fixed_task_points.md`
-- `docs/repeat_navigation_test_report.md`
+- `docs/templates/repeat_navigation_test_report.md`
 
 工作项：
 
@@ -436,13 +443,13 @@ ros2 run tf2_ros tf2_echo map odom
 
 - `config/task_points.yaml` 已经是主线固定点入口，但 business points 仍应标记为 candidate coordinates
 - `candidate_dock_a` 这类历史候选点可以继续作为补充验证输入，但不能直接等同于“正式固定点长期稳定”
-- V3 当前只启动最小 SQLite 数据层；executor / HTTP / 更完整的任务闭环仍暂缓到后续阶段
+- V3 当前已经接入最小 SQLite 数据层、受 ready gate 保护的 executor / task_runner，以及只负责 task create/query 的最小 HTTP API；更完整的调度闭环仍暂缓到后续阶段
 
 输出物：
 
 - `config/task_points.yaml`
 - `docs/fixed_task_points.md`
-- `docs/repeat_navigation_test_report.md`
+- `docs/templates/repeat_navigation_test_report.md`
 - 可供 V3 Mock WMS 消费的稳定 map frame 目标点集合
 
 ### V3：任务系统与上层调度
@@ -451,17 +458,18 @@ ros2 run tf2_ros tf2_echo map odom
 
 候选工作项：
 
-- SQLite / Mock WMS / HTTP 属于后续任务层
+- SQLite / Mock WMS 任务层当前已经包含最小 HTTP API，但它只负责创建/查询，不接入 Nav2 execute
 - 前提是 V2.1 和 V2.2 已完成
 - V3 任务系统只消费固定 map frame 目标点并更新任务状态
 
-V3.0 当前已启动的最小范围：
+V3 当前已落地的最小范围：
 
-- 当前只落 SQLite 任务数据层与 CLI create/list，不接 Nav2 action executor
+- V3.0：SQLite 任务数据层与 CLI `init/create/list` 已落地
+- V3.1：最小 ROS 2 task executor 与顺序 runner 已落地，并作为当前主线轻量任务执行验证入口
 - 当前只消费 `config/task_points.yaml`，并已允许 `candidate_dock_a` / `dock_a`、`station_a`、`station_b`、`shelf_1`、`shelf_2`
-- Mock WMS 只存储 `map` frame goal 和任务状态，不直接控制 `/cmd_vel`
-- 后续 ROS 2 task executor 才会消费 `pending` task 并发送 Nav2 goal
-- 因 V2.2 仍存在 lifecycle 偶发波动，当前不声明端到端任务执行已完全稳定
+- Mock WMS 只存储 `map` frame goal 和任务状态，在 ready gate 满足后通过 Nav2 action 下发 goal，不直接控制 `/cmd_vel`
+- V3.3 live 验证已确认：dry-run 不发送 goal；`station_a` 单条 execute 与 `station_a -> station_b` 顺序 execute 都拿到真实 `SUCCEEDED`
+- 因 fresh-session 下 lifecycle / discovery 仍有偶发波动，当前不声明完整 WMS 调度或端到端任务执行已经完全稳定
 
 ### V4：部署与扩展能力
 
@@ -503,11 +511,18 @@ V3.0 当前已启动的最小范围：
 - `pytest` / `colcon test` 集成已修复；当日自动化结果为 `16` 个测试全部通过。
 - 本轮确认：在缺少 initial pose 的 headless 复测中，`/map` 与 `/scan_filtered` 可正常发布，但 `map -> odom` 不一定建立。
 - 本轮进一步确认：执行 `ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone` 后，`map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 均可进入 `active`，且 `tf2_echo map odom` 可输出有效变换。
-- 当前结论不是继续“修导航功能”，而是要先标准化 initial pose handling、固定任务点并完成重复导航测试；WMS 暂缓到后续阶段。
+- 当前结论不是继续“修导航功能”，而是要先标准化 initial pose handling、固定任务点并完成重复导航测试；更完整 WMS 调度仍暂缓到后续阶段。
 
 ### 2026-05-13
 
-- 当前主线文档已统一到 fixed task points、repeat navigation、startup stability 和 WMS data-layer readiness 的最新状态。
-- 最新本地自动化校验结果为 `pytest test -q -> 25 passed in 0.44s`。
-- `config/task_points.yaml`、`publish_initial_pose` 和最小 Mock WMS 数据层说明已经补齐到 README / design / roadmap 主线文档。
-- 当前对外口径应表述为：Nav2 稳定基线已经建立，fixed task points 和最小任务数据层已经落地，但 fresh-session startup stability 与 business point repeat success 仍在继续收口。
+- 当前主线文档已统一到 fixed task points、repeat navigation、startup stability 和最小 Mock WMS 任务执行链的最新状态。
+- 最新本地自动化校验结果为 `pytest test -q -> 44 passed in 0.58s`。
+- `config/task_points.yaml`、`publish_initial_pose` 和最小 Mock WMS 数据层 / executor / task runner 说明已经补齐到 README / design / roadmap 主线文档。
+- 当前对外口径应表述为：Nav2 稳定基线已经建立，fixed task points 和最小任务执行链已经落地，但 fresh-session startup stability 仍在继续观察，更完整 WMS 调度仍未进入当前主线。
+
+### 2026-05-14
+
+- 当前主线已经补上最小 Mock WMS HTTP API，范围包括 `GET /health`、`POST /tasks`、`GET /tasks`、`GET /tasks/{task_id}`、`PATCH /tasks/{task_id}/status`。
+- 当前 `mock_wms_executor --api-base-url ...` 已能通过 HTTP 拉取最早一条 `pending` task；dry-run 会本地模拟并回写 `running -> succeeded`，`--execute` 会在 ready gate 满足后通过 Nav2 发送 goal，并继续通过 HTTP 回写 `running -> succeeded / failed`。
+- 这层 HTTP API 当前负责暴露 SQLite Mock WMS 数据层与最小状态回写边界，但仍不引入 Web 后台、MQTT、WebSocket 或多机器人调度。
+- 最新本地自动化校验结果为：从项目根目录执行 `make test`，得到 `63 passed`。

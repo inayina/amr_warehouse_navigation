@@ -21,7 +21,7 @@ waypoints.json
 ## 适用范围
 
 - 当前阶段：V2 Nav2 稳定基线之上的轻量任务层验证
-- 任务驱动器：`ros2 run amr_warehouse_sim mock_wms_runner`
+- 任务驱动器：`python3 future_extensions/wms_integration/scripts/mock_wms_runner.py`
 - waypoint 配置：`future_extensions/wms_integration/config/waypoints.json`
 - task 配置：`future_extensions/wms_integration/tasks/demo_tasks.json`
 - 输出报告：`future_extensions/wms_integration/reports/last_run.json`
@@ -57,7 +57,7 @@ dock_a
 ### A. Dry Run 验证
 
 1. 运行：
-   `ros2 run amr_warehouse_sim mock_wms_runner --mode dry-run`
+   `python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode dry-run`
 2. 确认终端输出包含：
    `Dry run validated ... tasks / ... steps`
 3. 打开：
@@ -74,7 +74,7 @@ dock_a
 2. 确认 `map_server`、`amcl`、`planner_server`、`controller_server`、`bt_navigator` 为 `active`
 3. 在 RViz 中设置 initial pose
 4. 运行：
-   `ros2 run amr_warehouse_sim mock_wms_runner --mode execute`
+   `python3 future_extensions/wms_integration/scripts/mock_wms_runner.py --mode execute`
 5. 观察机器人是否按 task / step 顺序发送 goal
 6. 检查报告中的 task 状态是否为：
    `succeeded` 或 `failed`
@@ -138,7 +138,7 @@ dock_a
 - execute 无法开始
   优先检查 `/navigate_to_pose` 是否可用，以及 Nav2 lifecycle 是否进入 `active`
 - 报告状态不准确
-  优先检查 `mock_wms_runner.py` 与 `wms_dispatcher.py` 的状态流转逻辑
+  优先检查 `future_extensions/wms_integration/scripts/mock_wms_runner.py` 与 `wms_dispatcher.py` 的状态流转逻辑
 - 多 step task 中途失败
   优先区分是导航链路问题，还是任务配置、goal 顺序或 waypoint 本身不合理
 

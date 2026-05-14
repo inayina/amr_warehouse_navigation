@@ -81,12 +81,12 @@ Gazebo World
 - `test/functional/`
 - `test/integration/`
 - `test/scenarios/`
-- `docs/test-report-template.md`
+- `docs/templates/test-report-template.md`
 - `docs/reports/test_report_2026_05_12.md`
 - `docs/reports/repeat_navigation_test_report_2026_05_13.md`
 - `docs/logs/nav2_startup_stability_notes.md`
 - `docs/logs/nav2_startup_stability_log_2026_05_13.md`
-- `docs/reports/wms_task_points_readiness_report_2026_05_13.md`
+`docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md`
 
 未来这一层会继续补强：
 
@@ -119,6 +119,12 @@ Gazebo World
 当前对应扩展目录：
 
 - `future_extensions/wms_integration/`
+
+补充说明：
+
+- 这套目录当前保留为 legacy 扩展样例和多 step 场景参考
+- 当前不建议继续把 `mock_wms_runner` 作为主线 CLI 暴露
+- 如果未来继续推进主线 WMS，优先从 SQLite + executor + task_runner + 最小 HTTP API 这一条线演进
 
 它的用途主要是：
 
