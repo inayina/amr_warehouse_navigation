@@ -11,6 +11,15 @@
 - `mock_wms_multi_task_regression.md`
   用于验证轻量 mock WMS 是否能顺序驱动多 task / 多 step 队列，并输出结构化报告。
 
+当前主线运行时验证已经补成三份场景 spec：
+
+- `headless_nav2_ready_integration.md`
+  用于验证 fresh session 下 headless Nav2 是否能稳定进入 ready gate。
+- `fixed_task_points_success_matrix_regression.md`
+  用于验证 `station_a`、`station_b`、`shelf_1`、`shelf_2` 的固定任务点成功矩阵。
+- `mock_wms_http_executor_end_to_end.md`
+  用于验证 HTTP API -> executor -> Nav2 -> HTTP 状态回写的最小端到端闭环。
+
 后续适合放入：
 
 - 1 到 2 米短距离导航 smoke test

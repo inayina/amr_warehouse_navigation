@@ -2,7 +2,13 @@
 
 ## 1. Purpose
 
-本文件定义 V3.0 Mock WMS 数据层、V3.1 最小任务执行链路、V3.1 最小 HTTP API create/query 入口，以及 V3.3 live ROS / Nav2 顺序任务验证的当前边界。
+本文件定义当前主线的最小 Mock WMS 任务闭环边界，包括 SQLite 数据层、CLI、最小任务执行链路、最小 HTTP API，以及 live ROS / Nav2 顺序任务验证的边界。
+
+截至 `2026-05-14`，这里的统一口径如下：
+
+- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环
+- 当前定位：面向物流机器人任务执行、导航验证、测试验收的项目案例
+- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端
 
 当前目标不是接管复杂任务调度，而是在不修改 Nav2 稳定基线的前提下，把最小 SQLite 任务入口、最小执行链路和 live 顺序执行证据做成可测试、可追踪的当前主线验证入口。
 
@@ -76,18 +82,20 @@ data/mock_wms.db
 当前最小状态机如下：
 
 ```text
-pending
-  -> running
-  -> canceled
+PENDING
+  -> RUNNING
+  -> CANCELED
 
-running
-  -> succeeded
-  -> failed
-  -> canceled
+RUNNING
+  -> SUCCEEDED
+  -> FAILED
+  -> CANCELED
 ```
 
 当前说明：
 
+- 对外展示时，推荐使用大写状态流转来表达任务生命周期
+- 落到 SQLite / HTTP API / CLI 时，实际使用的小写状态值仍然是 `pending / running / succeeded / failed / canceled`
 - 本轮 CLI 只创建 `pending` 任务
 - V3.1 最小 executor 在 ready gate 不满足时，会保持任务为 `pending`，同时更新 `status_reason`
 - V3.1 顺序 runner 只会在 execute 模式下连续消费队列；dry-run 仍只检查最早一条 `pending` task
@@ -127,7 +135,7 @@ config/task_points.yaml
 当前限制需要明确写出：
 
 - V3.3 live 验证已经完成，但不代表端到端任务执行已经完全稳定
-- 当前已有最小 HTTP API，但仍没有 MQTT、Web UI 或更完整调度服务
+- 当前已有最小 HTTP API，但它只负责 create/query/status-writeback，仍没有 MQTT、Web UI 或更完整调度服务
 - 当前没有常驻 ROS 2 task executor 服务，只有单次 executor 和顺序 runner
 - 当前顺序 runner 只支持单机器人、单 SQLite 队列、顺序执行，不做抢占、并发和复杂重试
 - 当前不会直接驱动机器人，也不会直接控制 `/cmd_vel`

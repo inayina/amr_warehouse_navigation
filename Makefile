@@ -31,7 +31,7 @@ run-api:
 
 run-executor:
 	@echo "[make] run mock_wms_executor (show help)"
-	bash -lc '$(RUN_IN_ENV) python -m amr_warehouse_sim.mock_wms_executor --help'
+	bash -lc '$(RUN_IN_ENV) $(PY) -m amr_warehouse_sim.mock_wms_executor --help'
 
 test:
 	@echo "[make] running pytest"

@@ -1,0 +1,36 @@
+{
+  "name": "amr-warehouse-sim-jazzy",
+  "build": {
+    "context": "..",
+    "dockerfile": "../Dockerfile",
+    "args": {
+      "ROS_DISTRO": "jazzy"
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/ros2_ws/src/amr_warehouse_sim,type=bind",
+  "workspaceFolder": "/workspaces/ros2_ws/src/amr_warehouse_sim",
+  "remoteUser": "ros",
+  "updateRemoteUserUID": true,
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [
+    8000
+  ],
+  "containerEnv": {
+    "AMR_WS": "/workspaces/ros2_ws",
+    "ROS_DISTRO": "jazzy"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-iot.vscode-ros",
+        "ms-vscode.makefile-tools"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

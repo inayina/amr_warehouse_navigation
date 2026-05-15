@@ -1,15 +1,17 @@
-# AMR / SLAM 项目设计说明
+# AMR 仓储导航与最小 Mock WMS 项目设计说明
 
 ## 1. 文档定位
 
-本文件是当前 AMR 仓库仿真项目的设计与当前稳定基线文档，负责说明：
+本文件是当前 AMR 仓储导航 + 最小 Mock WMS 任务执行闭环的设计基线文档，负责说明：
 
 - 当前系统链路
 - 当前已完成状态
+- 项目定位与边界
 - 地图文件与 Nav2 入口
-- 当前主线的设计边界
+- 当前主线的设计约束
 
 未来路线图请看 `docs/roadmap.md`，未来扩展架构方向请看 `docs/future_architecture.md`。
+如果要从“项目案例展示”视角理解系统结构，建议同时阅读 `docs/system_architecture.md`、`docs/prd_mock_wms_task_flow.md` 与 `docs/acceptance_checklist.md`。
 
 AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓库根目录 `AGENTS.md`，本文件不重复维护这些规则。
 
@@ -23,7 +25,13 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 
 ## 2. 当前阶段状态
 
-当前项目已经完成 **V1：AMR 仿真建图最小闭环**，当前主线处于 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。在此基础上，当前主线也已经补上 **V3.2：Mock WMS executor over HTTP** 的最小闭环：HTTP API 已覆盖 create/query/status-writeback，HTTP executor dry-run 可做本地模拟，`--execute` 可在 HTTP 边界内接回 Nav2 execute。
+截至 `2026-05-14`，当前项目的统一口径如下：
+
+- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环
+- 当前定位：面向物流机器人任务执行、导航验证、测试验收的项目案例
+- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端
+
+在这个定位下，当前项目已经完成 **V1：AMR 仿真建图最小闭环**，当前主线处于 **V2：Nav2 导航与路径执行**，并继续推进 **V2.2：固定任务点与重复导航验证**。在此基础上，当前主线也已经补上 **V3：最小 Mock WMS SQLite / CLI / executor / task runner / HTTP API 任务闭环**：HTTP API 当前覆盖 create/query/status-writeback，executor 与 task runner 负责在 ready gate 满足后接回 Nav2 execute。
 
 ### V1 已完成
 
@@ -43,7 +51,7 @@ AI / Coding Agent 的协作约束、修改边界和禁止事项统一放在仓�
 2. 标准化 initial pose handling，明确 `publish_initial_pose --preset start_zone` 的使用时机
 3. 维护 `config/task_points.yaml` 作为主线固定任务点输入
 4. 继续积累 fixed-goal 重复导航证据，并记录 startup stability 波动
-5. 让最小 Mock WMS 任务链只消费固定点位，不反向改 Nav2 主线
+5. 让最小 Mock WMS 任务链维持项目案例边界，只消费固定点位，不反向改 Nav2 主线
 
 ---
 
@@ -101,6 +109,15 @@ Saved Map
 - 最小 Mock WMS 执行入口：`scripts/run_mock_wms_executor.py`、`amr_warehouse_sim/mock_wms_task_runner.py`
 - SLAM 原始保存配置：`maps/warehouse_slam.yaml`
 - SLAM 地图图像：`maps/warehouse_slam.pgm`
+
+### 3.4 对外展示视角
+
+如果对外介绍当前主线，建议统一表达成两条链路：
+
+- 任务链路：`User / Operator -> CLI / HTTP API -> SQLite tasks -> executor / task_runner -> status writeback`
+- 验证链路：`publish_initial_pose -> Nav2 ready gate -> NavigateToPose -> Gazebo AMR -> docs / reports / acceptance`
+
+对应图示见 `docs/system_architecture.md`。
 
 ---
 

@@ -1,12 +1,112 @@
 # AMR Warehouse Simulation
 
-基于 ROS 2 Jazzy 和 Gazebo Harmonic 的 AMR 仓库建图与导航仿真项目。
+面向物流机器人任务执行与导航验证的最小闭环案例，基于 ROS 2 Jazzy、Gazebo Harmonic、Nav2 与 SQLite Mock WMS。
 
-当前 **V1：AMR 仿真建图最小闭环** 已完成，当前主线已经进入 **V2：Nav2 导航与路径执行**，并在此基础上继续推进 **V2.2：固定任务点与重复导航验证** 与 **V3.1：最小任务执行链路**。
+本项目模拟仓储 AMR 从任务创建、任务查询、任务执行到导航验证的最小闭环，用于验证物流机器人在仓储场景下的任务调度、导航执行与测试验收流程。
 
-最后更新：2026-05-14
+最后更新：2026-05-15
 
-## 当前功能
+## 项目定位
+
+- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环
+- 当前定位：面向物流机器人任务执行、导航验证、测试验收的项目案例
+- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端
+
+## 项目目标
+
+- 用固定任务点和 Nav2 稳定基线验证仓储 AMR 的点到点导航执行能力
+- 用 SQLite、CLI 和最小 HTTP API 模拟上层任务创建、查询和状态回写
+- 用 executor / task runner + ready gate 把“任务下发 -> 导航执行 -> 结果回写”串成可复核闭环
+- 用测试、报告和验收文档支撑简历、面试和 GitHub 展示
+
+## 当前完成状态
+
+- V1：AMR 仿真建图最小闭环已完成
+- V2：Nav2 导航与路径执行已形成稳定基线
+- V2.2：固定任务点、重复导航验证与 readiness 证据已形成一版可复核基线
+- V3：最小 Mock WMS SQLite / CLI / executor / task runner / HTTP API 已接入当前主线
+- 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
+- 截至 `2026-05-14`，本地 `make test` 最新结果为 `63 passed`
+
+## 系统模块
+
+- 导航基线：`launch/navigation.launch.py`、`config/nav2_params.yaml`、`maps/warehouse.yaml`
+- 固定任务点与定位入口：`config/task_points.yaml`、`publish_initial_pose --preset start_zone`
+- Mock WMS 数据层：SQLite、`init_mock_wms_db`、`create_mock_task`、`list_mock_tasks`
+- 最小任务执行层：`mock_wms_executor`、`mock_wms_task_runner`
+- 最小 HTTP 入口：`mock_wms_api` 暴露任务创建、查询和最小状态回写
+- 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`
+
+## 最小运行链路
+
+```mermaid
+flowchart LR
+    U["User / Operator"] --> A["Create task<br/>CLI or HTTP API"]
+    A --> B["SQLite tasks"]
+    B --> C["mock_wms_executor /<br/>mock_wms_task_runner"]
+    C --> D["Nav2 ready checks<br/>lifecycle + /navigate_to_pose"]
+    D --> E["NavigateToPose"]
+    E --> F["AMCL / planner / controller / bt_navigator"]
+    F --> G["Gazebo AMR"]
+    G --> H["Task status writeback"]
+    H --> B
+    C -. validate .-> I["Docs / test reports /<br/>acceptance checklist"]
+```
+
+## Mock WMS 当前边界
+
+- 只处理 `config/task_points.yaml` 中的固定 `map` frame 目标点
+- 当前 HTTP API 只覆盖 `GET /health`、`POST /tasks`、`GET /tasks`、`GET /tasks/{task_id}`、`PATCH /tasks/{task_id}/status`
+- `--dry-run` 只检查 ready gate，不发送 `/navigate_to_pose` goal
+- `--execute` 只在 ready gate 满足后才发送 goal，并做最小状态回写
+- 当前不包含订单、库位、权限、账号、前端后台、常驻调度服务或多机器人协同
+
+## 测试与验收入口
+
+- 项目 PRD：[docs/prd_mock_wms_task_flow.md](docs/prd_mock_wms_task_flow.md)
+- 系统架构图：[docs/system_architecture.md](docs/system_architecture.md)
+- 验收清单：[docs/acceptance_checklist.md](docs/acceptance_checklist.md)
+- 当前设计说明：[docs/design.md](docs/design.md)
+- 当前路线图：[docs/roadmap.md](docs/roadmap.md)
+- 文档索引：[docs/README.md](docs/README.md)
+- 测试目录说明：[test/README.md](test/README.md)
+- WMS 验证报告目录：[docs/wms/reports/](docs/wms/reports/)
+- 可视化演示指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)
+
+## 项目截图 / 录屏入口
+
+当前主线的 GitHub 展示请以录屏指南、演示脚本和验证文档为准。
+
+说明：
+
+- 仓库中的历史动图不代表当前主线，因此不再作为 README 首页展示素材。
+- 当前更准确的展示方式是复用下面的录屏入口，按现有主线重新录制 Gazebo + RViz + Mock WMS 任务执行演示。
+- 如果后续补齐当前主线截图或 GIF，建议再把新素材挂回本小节。
+
+### 录屏入口
+
+- 可视化录屏指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)
+- 一键演示脚本：`./scripts/run_mock_wms_visual_demo.sh --clean`
+- 推荐主路径：
+  `Gazebo + RViz -> publish_initial_pose -> create_mock_task -> mock_wms_task_runner --execute -> list_mock_tasks`
+
+### GitHub 展示建议顺序
+
+1. 先读 [docs/system_architecture.md](docs/system_architecture.md)，理解任务链路和验证链路。
+2. 如果想复现演示，按 [docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md) 或脚本入口运行。
+3. 如果想确认结果和边界，再看 [docs/acceptance_checklist.md](docs/acceptance_checklist.md) 与 [docs/wms/reports/](docs/wms/reports/)。
+4. 如果要补 GitHub 首页素材，优先按同一路径录制当前主线 GIF 或截图，再回填到 README。
+
+### 建议后续补充的静态截图
+
+当前仓库尚未成套提交当前主线静态截图；如果后续要继续增强 GitHub 展示，最值得补的素材是：
+
+- Gazebo + RViz 同屏总览图
+- `mock_wms_task_runner --execute` 终端执行截图
+- `list_mock_tasks` 中任务最终 `succeeded` 的结果截图
+- HTTP API `POST /tasks` 与 `GET /tasks` 的 JSON 响应截图
+
+## 当前实现能力
 
 - Gazebo 仓库世界：`worlds/warehouse_full.world`
 - 差速 AMR 模型：`models/my_robot/model.sdf`
@@ -39,6 +139,30 @@
 - V2 Nav2 需要：`ros-jazzy-navigation2`、`ros-jazzy-nav2-bringup`
 - 一键脚本依赖：`tmux`
 
+## 容器开发入口
+
+当前仓库已经补回主线可用的根目录 `Dockerfile` 和 `.devcontainer/devcontainer.json`，用于提供：
+
+- ROS 2 Jazzy 基础环境
+- `colcon build`
+- `pytest`
+- Mock WMS API / CLI 相关轻量开发入口
+
+边界也很明确：
+
+- 它不替代当前本机 `Gazebo + Nav2 + RViz` 主流程
+- 它不作为当前 live `/navigate_to_pose` 验证的默认入口
+
+快速构建：
+
+```bash
+docker build -t amr-warehouse-sim-dev .
+```
+
+详细使用方式、支持范围和本机/容器边界见：
+
+- [docs/container_usage.md](docs/container_usage.md)
+
 ## 编译
 
 推荐从工作空间根目录编译：
@@ -67,7 +191,7 @@ x = 0.0, y = 0.0, z = 0.0
 - `test/data/`：地图、YAML、Nav2 参数等静态配置回归
 - `test/functional/`：launch 和功能入口 smoke test
 - `test/integration/`：当前已包含导航链路契约、mock WMS contract、SQLite 数据层回归，以及 executor / task runner contract
-- `test/scenarios/`：当前已包含短距离导航和重启后 relocalization 的场景 spec，后续继续扩展到端到端回归
+- `test/scenarios/`：当前已包含短距离导航、headless ready-gate、固定任务点成功矩阵、HTTP executor 端到端，以及重启后 relocalization 的场景 spec
 
 从项目根目录快速运行：
 
@@ -109,7 +233,7 @@ colcon test-result --verbose --test-result-base build/amr_warehouse_sim
 - `data`：地图、Nav2 参数、固定任务点配置回归
 - `functional`：主 launch smoke test、`initial_pose_publisher` 功能入口
 - `integration`：V2 导航链路契约、mock WMS contract、mock WMS SQLite 数据层、executor / task runner contract
-- `scenarios`：短距离导航和重启后 relocalization 场景 spec
+- `scenarios`：短距离导航、headless ready-gate、固定任务点成功矩阵、HTTP executor 端到端和重启后 relocalization 场景 spec
 
 `test/README.md` 里也写了后续如何继续扩展到 `launch_testing`、runtime integration 和真机回归测试。
 最新一轮基线测试执行记录见 [docs/reports/test_report_2026_05_12.md](docs/reports/test_report_2026_05_12.md)。
@@ -125,6 +249,9 @@ config/nav2_params_collision_monitor_stage1.yaml
 ## 文档
 
 - 文档索引：[docs/README.md](docs/README.md)
+- 项目 PRD：[docs/prd_mock_wms_task_flow.md](docs/prd_mock_wms_task_flow.md)
+- 系统架构图：[docs/system_architecture.md](docs/system_architecture.md)
+- 验收清单：[docs/acceptance_checklist.md](docs/acceptance_checklist.md)
 - 设计说明：[docs/design.md](docs/design.md)
 - 未来架构方向：[docs/future_architecture.md](docs/future_architecture.md)
 - 项目路线图：[docs/roadmap.md](docs/roadmap.md)
@@ -138,6 +265,7 @@ config/nav2_params_collision_monitor_stage1.yaml
 - Mock WMS HTTP API 计划：[docs/designs/mock_wms_http_api_plan.md](docs/designs/mock_wms_http_api_plan.md)
 - Mock WMS HTTP API 验证：[docs/wms/reports/mock_wms_http_api_validation_2026_05_14.md](docs/wms/reports/mock_wms_http_api_validation_2026_05_14.md)
 - Mock WMS HTTP API 手动测试指南：[docs/guides/mock_wms_http_api_manual_test_guide.md](docs/guides/mock_wms_http_api_manual_test_guide.md)
+- Mock WMS 可视化录屏演示指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)
 - Mock WMS CLI / 入口桥接说明：[docs/guides/mock_wms_cli_entrypoints_explained.md](docs/guides/mock_wms_cli_entrypoints_explained.md)
 - Tests & CI summary：[docs/reports/tests_ci_summary_2026_05_14.md](docs/reports/tests_ci_summary_2026_05_14.md)
 - WMS future extensions notes：[docs/future_extensions_wms.md](docs/future_extensions_wms.md)
@@ -152,7 +280,8 @@ config/nav2_params_collision_monitor_stage1.yaml
 - WMS 任务点 readiness 报告：[docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md](docs/wms/reports/wms_task_points_readiness_report_2026_05_13.md)
 - Mock WMS executor execute 验证：[docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md](docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md)
 - Mock WMS task runner live 验证：[docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md](docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md)
-- 中英文简历要点：[docs/resume-bullets.md](docs/resume-bullets.md)
+- 简历版摘要：[docs/resume-bullets.md](docs/resume-bullets.md)
+- 面试讲解提纲：[docs/interview_talking_points.md](docs/interview_talking_points.md)
 - 测试报告模板：[docs/templates/test-report-template.md](docs/templates/test-report-template.md)
 - `collision_monitor` stage1 实验记录：[docs/reports/collision_monitor_stage1_test_report.md](docs/reports/collision_monitor_stage1_test_report.md)
 

@@ -8,21 +8,29 @@
 
 1. [design.md](./design.md)
    当前主线设计、阶段状态、稳定入口和边界说明。
-2. [roadmap.md](./roadmap.md)
+2. [prd_mock_wms_task_flow.md](./prd_mock_wms_task_flow.md)
+   面向项目经理 / 技术产品 / 系统集成岗位的最小功能说明。
+3. [system_architecture.md](./system_architecture.md)
+   任务链路和验证链路的系统结构图。
+4. [acceptance_checklist.md](./acceptance_checklist.md)
+   面向验收的检查表、命令入口和证据追溯。
+5. [roadmap.md](./roadmap.md)
    近中期路线图，说明当前优先级和下一阶段目标。
-3. [troubleshooting.md](./troubleshooting.md)
+6. [troubleshooting.md](./troubleshooting.md)
    V1 / V2 排障顺序和常用检查命令。
-4. [fixed_task_points.md](./fixed_task_points.md)
+7. [fixed_task_points.md](./fixed_task_points.md)
    当前主线固定任务点入口与点位状态。
-5. [designs/README.md](./designs/README.md)
+8. [designs/README.md](./designs/README.md)
    WMS 相关设计、计划与演进文档入口。
-6. [guides/README.md](./guides/README.md)
+9. [container_usage.md](./container_usage.md)
+   当前 Docker / devcontainer 轻量开发入口、支持范围与边界说明。
+10. [guides/README.md](./guides/README.md)
    WMS 相关手动测试、CLI 说明与操作指南入口。
-7. [reports/README.md](./reports/README.md)
+11. [reports/README.md](./reports/README.md)
    正式验证结果入口。
-8. [logs/README.md](./logs/README.md)
+12. [logs/README.md](./logs/README.md)
    过程日志与诊断记录入口。
-9. [templates/README.md](./templates/README.md)
+13. [templates/README.md](./templates/README.md)
    报告模板入口。
 
 ## 2. 当前主线入口文档
@@ -31,6 +39,12 @@
 
 - [design.md](./design.md)
   当前稳定基线、主线文件、阶段说明。
+- [prd_mock_wms_task_flow.md](./prd_mock_wms_task_flow.md)
+  当前最小任务闭环的 PRD / 功能说明。
+- [system_architecture.md](./system_architecture.md)
+  当前任务链路与验证链路结构图。
+- [acceptance_checklist.md](./acceptance_checklist.md)
+  当前验收项、验证方法和证据入口。
 - [roadmap.md](./roadmap.md)
   当前公开路线图。
 - [troubleshooting.md](./troubleshooting.md)
@@ -39,6 +53,8 @@
   `config/task_points.yaml` 的主线解释。
 - [future_architecture.md](./future_architecture.md)
   未来扩展边界，不等同于“已经实现”。
+- [container_usage.md](./container_usage.md)
+  当前 Docker / devcontainer 入口与本机边界说明。
 
 ## 3. WMS 设计与计划
 
@@ -61,6 +77,10 @@
 
 - [guides/README.md](./guides/README.md)
   指南子目录索引。
+- [container_usage.md](./container_usage.md)
+  当前主线的 Docker / devcontainer 轻量开发入口说明。
+- [guides/mock_wms_visual_demo_recording_guide.md](./guides/mock_wms_visual_demo_recording_guide.md)
+  可视化演示、录屏和 GitHub 展示说明。
 - [guides/mock_wms_http_api_manual_test_guide.md](./guides/mock_wms_http_api_manual_test_guide.md)
   最小 Mock WMS HTTP API 的逐步手动测试指南。
 - [guides/mock_wms_cli_entrypoints_explained.md](./guides/mock_wms_cli_entrypoints_explained.md)
@@ -116,6 +136,8 @@
   任务点候选坐标规划说明。
 - [resume-bullets.md](./resume-bullets.md)
   对外展示 / 简历素材。
+- [interview_talking_points.md](./interview_talking_points.md)
+  面试讲项目时可直接复用的结构化提纲。
 
 ## 8. 当前 WMS 主线判断
 

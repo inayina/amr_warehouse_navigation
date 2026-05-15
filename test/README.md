@@ -7,22 +7,22 @@
 - `测试用例` 是最小执行单位，每个 `test_*.py` 里的每个 `test_xxx()` 都是一个测试用例。
 - `data / functional / integration / scenarios` 是分类方式，用来回答“这个测试在验证哪一层风险”。
 
-## 当前目录结构
+## 当前目录结构（节选）
 
 ```text
 test/
 ├── conftest.py
 ├── data/
-│   ├── README.md
-│   ├── test_map_files.py
-│   └── test_navigation_config.py
+│   └── ...
 ├── functional/
-│   ├── README.md
-│   └── test_launch_smoke.py
+│   └── ...
 ├── integration/
-│   └── README.md
+│   └── ...
 └── scenarios/
-    └── README.md
+    ├── headless_nav2_ready_integration.md
+    ├── fixed_task_points_success_matrix_regression.md
+    ├── mock_wms_http_executor_end_to_end.md
+    └── ...
 ```
 
 ## 各层职责
@@ -41,7 +41,7 @@ test/
 
 - `scenarios/`
   适合验证面向业务场景的端到端表现，例如短距离 goal、狭窄货架通道导航、重复启停回归。
-  当前已经有三份可直接执行和记录结果的场景测试 spec。
+  当前已经有多份可直接执行和记录结果的场景测试 spec，其中主线运行时验证包括 headless ready-gate、固定任务点成功矩阵和 HTTP executor 端到端闭环。
 
 ## 运行方式
 
@@ -98,10 +98,19 @@ colcon test-result --verbose
 - `test/scenarios/mock_wms_multi_task_regression.md`
   定义 mock WMS 驱动的多任务回归流程，覆盖 dry-run、execute 和任务报告检查。
 
+- `test/scenarios/headless_nav2_ready_integration.md`
+  定义 fresh session + headless 模式下的 Nav2 ready-gate 运行时集成验证。
+
+- `test/scenarios/fixed_task_points_success_matrix_regression.md`
+  定义 `station_a`、`station_b`、`shelf_1`、`shelf_2` 的固定任务点成功矩阵回归。
+
+- `test/scenarios/mock_wms_http_executor_end_to_end.md`
+  定义最小 HTTP API -> executor -> Nav2 -> HTTP 状态回写闭环的运行时验证流程。
+
 ## 后续建议
 
-- `integration/` 优先补 TF、topic、lifecycle 和节点启动后的链路检查。
-- `scenarios/` 后续可以继续补更具体的固定坐标 goal 和多轮成功率统计。
-- `scenarios/` 也适合继续补 mock WMS 驱动的任务回归和报告化验证。
+- `integration/` 仍可继续补更强的 launch / runtime integration；但当前主线更优先的是把 `scenarios/` 中的关键运行时案例持续执行并沉淀报告。
+- `scenarios/` 后续可以继续补更具体的固定坐标 goal、多轮成功率统计和 shelf 点位重复稳定性记录。
+- `scenarios/` 也适合继续补 task runner、HTTP executor 与验收报告之间的一致性验证。
 - 真机或半实物阶段，再把 bag 回放和传感器回归测试逐步接进来。
 - 测试完成后建议配合 `docs/templates/test-report-template.md` 输出一份正式测试报告。
