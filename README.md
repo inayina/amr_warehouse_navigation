@@ -1,23 +1,64 @@
-# AMR Warehouse Simulation
+# AMR Warehouse Navigation
 
-面向物流机器人任务执行与导航验证的最小闭环案例，基于 ROS 2 Jazzy、Gazebo Harmonic、Nav2 与 SQLite Mock WMS。
+Related repositories:
 
-本项目模拟仓储 AMR 从任务创建、任务查询、任务执行到导航验证的最小闭环，用于验证物流机器人在仓储场景下的任务调度、导航执行与测试验收流程。
+- [robot-ops-dashboard](https://github.com/inayina/robot-ops-dashboard)
+- [ros2-robot-digital-twin](https://github.com/inayina/ros2-robot-digital-twin)
 
-最后更新：2026-05-15
+AMR 仿真导航子系统仓库，面向 Robot Ops Dashboard 提供 Gazebo 仓库仿真、SLAM 建图、Nav2 导航、固定任务点导航执行，以及最小 Mock WMS 任务数据来源。
+
+ROS 2 包名仍为 `amr_warehouse_sim`；GitHub 仓库名为 `amr_warehouse_navigation`。当前整理只调整项目说明与文档入口，不改变 launch、Nav2 参数、world 或 robot model 的稳定基线。
+
+最后更新：2026-05-27
 
 ## 项目定位
 
-- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环
-- 当前定位：面向物流机器人任务执行、导航验证、测试验收的项目案例
-- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端
+- 当前主线：AMR 仿真、建图、定位、导航与最小任务执行数据链
+- 对上游关系：作为 Robot Ops Dashboard 的 AMR 仿真导航与任务状态数据来源
+- 对同族项目关系：与 `ros2-robot-digital-twin` 一起组成 ROS 2 机器人展示项目中的仿真 / 数字孪生侧能力
+- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端，也不直接代表真实底盘控制
 
 ## 项目目标
 
 - 用固定任务点和 Nav2 稳定基线验证仓储 AMR 的点到点导航执行能力
 - 用 SQLite、CLI 和最小 HTTP API 模拟上层任务创建、查询和状态回写
 - 用 executor / task runner + ready gate 把“任务下发 -> 导航执行 -> 结果回写”串成可复核闭环
-- 用测试、报告和验收文档支撑简历、面试和 GitHub 展示
+- 为 Robot Ops Dashboard 提供可消费的 AMR 任务状态、导航结果和演示素材
+- 用测试、报告和验收文档支撑作品集、面试和 GitHub 展示
+
+## 技术栈
+
+- ROS 2 Jazzy：launch、topic、TF、action、lifecycle、package entry points
+- Gazebo Harmonic：仓库环境、差速 AMR、雷达、里程计和 `/cmd_vel` 运动仿真
+- SLAM Toolbox：基于 `/scan_filtered` 的在线建图与地图保存
+- Nav2：`map_server`、AMCL、planner、controller、BT navigator 与 NavigateToPose action
+- RViz2：地图、LaserScan、TF、costmap、RobotModel 和 Nav2 Goal 可视化
+- Python / SQLite / FastAPI：最小 Mock WMS CLI、HTTP API、executor 与状态回写
+- pytest / colcon test：配置、数据层、入口契约和场景 spec 回归
+
+## 系统架构
+
+```mermaid
+flowchart LR
+    DASH["Robot Ops Dashboard<br/>HTTP proxy / task view"] <-->|HTTP REST| API["Mock WMS FastAPI<br/>/health /tasks"]
+    CLI["Mock WMS CLI<br/>create/list"] --> DB["SQLite task DB"]
+    API <--> DB
+    DB --> EXEC["executor / task_runner<br/>ready gate + status writeback"]
+    EXEC -->|NavigateToPose| NAV2["Nav2<br/>map_server AMCL planner controller bt_navigator"]
+    NAV2 -->|/cmd_vel| GZ["Gazebo AMR"]
+    GZ -->|/scan /odom /tf| SENS["LaserScan / Odom / TF"]
+    SENS --> SLAM["SLAM Toolbox<br/>warehouse map"]
+    SENS --> NAV2
+    SLAM --> MAP["maps/warehouse.yaml"]
+    MAP --> NAV2
+```
+
+数据边界：
+
+- Dashboard 通过 HTTP 读取或创建 Mock WMS task，不直接调度 Nav2。
+- executor / task runner 是任务到 Nav2 action 的最小执行边界。
+- Nav2 输出 `/cmd_vel` 驱动 Gazebo 机器人，不驱动真实电机。
+- 固定任务点来自 `config/task_points.yaml`，地图入口来自 `maps/warehouse.yaml`。
 
 ## 当前完成状态
 
@@ -36,6 +77,45 @@
 - 最小任务执行层：`mock_wms_executor`、`mock_wms_task_runner`
 - 最小 HTTP 入口：`mock_wms_api` 暴露任务创建、查询和最小状态回写
 - 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`
+
+## 快速启动
+
+从工作空间根目录编译：
+
+```bash
+cd ~/ros2_ws
+source /opt/ros/jazzy/setup.bash
+colcon build --symlink-install --packages-select amr_warehouse_sim
+source install/setup.bash
+```
+
+启动 Nav2 仿真导航主线：
+
+```bash
+ros2 launch amr_warehouse_sim navigation.launch.py
+```
+
+设置初始位姿：
+
+```bash
+ros2 run amr_warehouse_sim publish_initial_pose --preset start_zone --wait-for-subscribers 30
+```
+
+启动最小 Mock WMS HTTP API，供 Dashboard 联调：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+source .venv/bin/activate
+uvicorn scripts.mock_wms_api:create_app --factory --host 127.0.0.1 --port 8000
+```
+
+创建并执行一条固定任务点任务：
+
+```bash
+ros2 run amr_warehouse_sim init_mock_wms_db
+ros2 run amr_warehouse_sim create_mock_task --target station_a
+ros2 run amr_warehouse_sim mock_wms_task_runner --execute --max-tasks 1
+```
 
 ## 最小运行链路
 
@@ -65,6 +145,9 @@ flowchart LR
 
 - 项目 PRD：[docs/prd_mock_wms_task_flow.md](docs/prd_mock_wms_task_flow.md)
 - 系统架构图：[docs/system_architecture.md](docs/system_architecture.md)
+- SLAM / Nav2 配置关系：[docs/slam_nav2_notes.md](docs/slam_nav2_notes.md)
+- Nav2 调参记录：[docs/tuning_log.md](docs/tuning_log.md)
+- 作品集摘要：[docs/portfolio_summary.md](docs/portfolio_summary.md)
 - 验收清单：[docs/acceptance_checklist.md](docs/acceptance_checklist.md)
 - 当前设计说明：[docs/design.md](docs/design.md)
 - 当前路线图：[docs/roadmap.md](docs/roadmap.md)
@@ -81,12 +164,13 @@ flowchart LR
 
 - 仓库中的历史动图不代表当前主线，因此不再作为 README 首页展示素材。
 - 当前更准确的展示方式是复用下面的录屏入口，按现有主线重新录制 Gazebo + RViz + Mock WMS 任务执行演示。
-- 如果后续补齐当前主线截图或 GIF，建议再把新素材挂回本小节。
+- 如果后续补齐当前主线截图或 GIF，建议按 [artifacts/screenshots/README.md](artifacts/screenshots/README.md) 的清单保存，再把新素材挂回本小节。
 
 ### 录屏入口
 
 - 可视化录屏指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)
 - 一键演示脚本：`./scripts/run_mock_wms_visual_demo.sh --clean`
+- 看板联动录屏脚本：`./scripts/run_mock_wms_dashboard_recording_demo.sh`
 - 推荐主路径：
   `Gazebo + RViz -> publish_initial_pose -> create_mock_task -> mock_wms_task_runner --execute -> list_mock_tasks`
 

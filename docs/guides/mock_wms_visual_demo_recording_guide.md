@@ -74,6 +74,57 @@ cd ~/ros2_ws/src/amr_warehouse_sim
 
 如果你想完全理解每一步在做什么，继续看下面的手工分步版。
 
+## 2.2 看板联动录屏入口
+
+如果这次录屏需要同步展示 `robot-ops-dashboard` 看板，并且要求使用本仓库的默认 Mock WMS 数据库：
+
+```text
+data/mock_wms.db
+```
+
+推荐使用 AMR 仓库侧的看板录屏封装脚本：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+./scripts/run_mock_wms_dashboard_recording_demo.sh
+```
+
+这个入口会调用看板仓库：
+
+```text
+/home/ina/workspace/robot-ops-dashboard/scripts/run_amr_dashboard_recording_demo.sh
+```
+
+并自动完成：
+
+```text
+启动 / 检查 Mock WMS HTTP API
+→ 启动 / 检查 Dashboard backend
+→ 启动 / 检查 Dashboard frontend
+→ 使用 data/mock_wms.db 重置并创建四个任务
+→ 顺序执行 station_a、station_b、shelf_1、shelf_2
+→ 看板前端持续读取同一个 Mock WMS 数据库
+```
+
+常用变体：
+
+- 已经手动启动了 `navigation.launch.py`：
+  `./scripts/run_mock_wms_dashboard_recording_demo.sh --skip-launch`
+- 只想检查 API / 看板联通，不实际跑导航：
+  `./scripts/run_mock_wms_dashboard_recording_demo.sh --no-run-demo`
+- 需要 headless 验证：
+  `./scripts/run_mock_wms_dashboard_recording_demo.sh --headless --verbose`
+- 看板仓库不在默认路径：
+  `./scripts/run_mock_wms_dashboard_recording_demo.sh --dashboard-repo /path/to/robot-ops-dashboard`
+
+录屏时打开：
+
+```text
+http://127.0.0.1:8001/frontend/
+```
+
+说明：这个脚本默认会重置 `data/mock_wms.db`，以保证每次录屏从四条 `pending` 任务开始。
+
 ## 3. 适用范围
 
 本指南只覆盖当前主线已经稳定暴露出来的最小链路：
