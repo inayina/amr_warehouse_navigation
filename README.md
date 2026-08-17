@@ -7,16 +7,20 @@ Related repositories:
 
 AMR 仿真导航子系统仓库，面向 Robot Ops Dashboard 提供 Gazebo 仓库仿真、SLAM 建图、Nav2 导航、固定任务点导航执行，以及最小 Mock WMS 任务数据来源。
 
+**English:** ROS 2 / Gazebo warehouse AMR project with a **minimal fleet scheduling layer** (Registry, Dispatcher, haul FSM, heartbeat, resource lock) on top of the existing single-robot Mock WMS → Nav2 baseline. This is a **learning / demo EMS abstraction**, not a production-grade fleet platform.
+
+**中文：** 在原有单机器人 Mock WMS → Nav2 执行闭环上，增加最小 Fleet / EMS 调度层（注册、分配、搬运状态机、心跳重分配、资源锁），用于验证 WMS / Fleet / Executor 分层；**不宣称**生产级调度系统。
+
 ROS 2 包名仍为 `amr_warehouse_sim`；GitHub 仓库名为 `amr_warehouse_navigation`。当前整理只调整项目说明与文档入口，不改变 launch、Nav2 参数、world 或 robot model 的稳定基线。
 
-最后更新：2026-05-27
+最后更新：2026-08-17
 
 ## 项目定位
 
-- 当前主线：AMR 仿真、建图、定位、导航与最小任务执行数据链
+- 当前主线：AMR 仿真、建图、定位、导航、最小任务执行数据链，以及 **opt-in 最小 Fleet / EMS 调度层**（纯 Python 验证，默认仍为单车 Gazebo / Nav2）
 - 对上游关系：作为 Robot Ops Dashboard 的 AMR 仿真导航与任务状态数据来源
 - 对同族项目关系：与 `ros2-robot-digital-twin` 一起组成 ROS 2 机器人展示项目中的仿真 / 数字孪生侧能力
-- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端，也不直接代表真实底盘控制
+- 当前边界：不是完整 WMS，不是生产级多机器人调度平台；Fleet 层是 demo / 学习抽象，默认 Gazebo 入口仍是 **单机器人** `navigation.launch.py`
 
 ## 项目目标
 
@@ -66,8 +70,10 @@ flowchart LR
 - V2：Nav2 导航与路径执行已形成稳定基线
 - V2.2：固定任务点、重复导航验证与 readiness 证据已形成一版可复核基线
 - V3：最小 Mock WMS SQLite / CLI / executor / task runner / HTTP API 已接入当前主线
+- Fleet Stage 1–5：最小 Robot Registry、Dispatcher、pickup→dropoff 搬运 FSM、heartbeat 重分配、resource lock 已接入（**SimulatedRobotContext + pytest**，不改动 Nav2 / Gazebo 单车基线）
+- Fleet Stage 6：Gazebo / Nav2 双车 demo **有意 deferred**，blocker 见 [docs/fleet/MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md)
 - 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
-- 截至 `2026-05-14`，本地 `make test` 最新结果为 `63 passed`
+- 截至 `2026-08-17`，本地 `python3 -m pytest test -q` 最新结果为 `107 passed, 7 skipped`
 
 ## 系统模块
 
@@ -76,7 +82,8 @@ flowchart LR
 - Mock WMS 数据层：SQLite、`init_mock_wms_db`、`create_mock_task`、`list_mock_tasks`
 - 最小任务执行层：`mock_wms_executor`、`mock_wms_task_runner`
 - 最小 HTTP 入口：`mock_wms_api` 暴露任务创建、查询和最小状态回写
-- 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`
+- Fleet / EMS 调度层（opt-in）：`amr_warehouse_sim/fleet/` — Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock
+- 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`、`docs/fleet/`
 
 ## 快速启动
 
@@ -139,7 +146,41 @@ flowchart LR
 - 当前 HTTP API 只覆盖 `GET /health`、`POST /tasks`、`GET /tasks`、`GET /tasks/{task_id}`、`PATCH /tasks/{task_id}/status`
 - `--dry-run` 只检查 ready gate，不发送 `/navigate_to_pose` goal
 - `--execute` 只在 ready gate 满足后才发送 goal，并做最小状态回写
-- 当前不包含订单、库位、权限、账号、前端后台、常驻调度服务或多机器人协同
+- 当前不包含订单、库位、权限、账号、前端后台、常驻调度服务或 **Gazebo 多机器人协同**（Fleet 多机行为目前仅在 pytest / SimulatedRobotContext 中验证）
+
+## Fleet / EMS 最小调度层
+
+在 V3 单车 Mock WMS 之上，仓库新增一层 **纯 Python Fleet / EMS 学习抽象**，用于验证「谁去做」与「怎么做」分离。默认 Gazebo 入口不变；Fleet 不发送 `/cmd_vel`，也不改 Nav2 参数。
+
+```mermaid
+flowchart LR
+    WMS["Mock WMS<br/>业务任务"] --> DISP["Fleet Dispatcher<br/>选 robot + cost"]
+    DISP --> REG["Robot Registry<br/>IDLE / BUSY / OFFLINE"]
+    DISP --> HAUL["HaulTaskController<br/>pickup → dropoff FSM"]
+    HAUL --> EXEC["Robot Executor<br/>NavigateToPose per robot"]
+    EXEC --> NAV2["Nav2 单车基线"]
+    HB["HeartbeatMonitor"] --> REG
+    RL["ResourceLockManager"] -. opt-in .-> HAUL
+```
+
+| 能力 | 入口 | 文档 |
+| --- | --- | --- |
+| Robot Registry | `fleet/registry.py` | [ROBOT_STATE_MACHINE.md](docs/fleet/ROBOT_STATE_MACHINE.md) |
+| Fleet Dispatcher | `fleet/dispatcher.py` | [EMS_FLEET_DESIGN.md](docs/fleet/EMS_FLEET_DESIGN.md) |
+| 搬运 FSM | `fleet/haul_executor.py` | [TASK_LIFECYCLE.md](docs/fleet/TASK_LIFECYCLE.md) |
+| Heartbeat / 重分配 | `fleet/heartbeat.py` | [TASK_LIFECYCLE.md](docs/fleet/TASK_LIFECYCLE.md) |
+| Resource Lock | `fleet/resources.py` | [RESOURCE_LOCKING.md](docs/fleet/RESOURCE_LOCKING.md) |
+| Stage 6 blocker | — | [MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md) |
+
+Fleet 集成测试：
+
+```bash
+cd ~/ros2_ws/src/amr_warehouse_sim
+python3 -m pytest test/integration/test_fleet_*.py -q
+python3 -m pytest test -q   # 含 Scenario H 单车 baseline 回归
+```
+
+Fleet 文档索引：[docs/fleet/README.md](docs/fleet/README.md)
 
 ## 测试与验收入口
 
@@ -152,6 +193,7 @@ flowchart LR
 - 当前设计说明：[docs/design.md](docs/design.md)
 - 当前路线图：[docs/roadmap.md](docs/roadmap.md)
 - 文档索引：[docs/README.md](docs/README.md)
+- Fleet / EMS 文档索引：[docs/fleet/README.md](docs/fleet/README.md)
 - 测试目录说明：[test/README.md](test/README.md)
 - WMS 验证报告目录：[docs/wms/reports/](docs/wms/reports/)
 - 可视化演示指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)
@@ -333,6 +375,7 @@ config/nav2_params_collision_monitor_stage1.yaml
 ## 文档
 
 - 文档索引：[docs/README.md](docs/README.md)
+- 求职叙事文档（定位 / 四阶段落地 / 证据与已知问题 / 面试要点）：[docs/portfolio/PROJECT_NARRATIVE.md](docs/portfolio/PROJECT_NARRATIVE.md)
 - 项目 PRD：[docs/prd_mock_wms_task_flow.md](docs/prd_mock_wms_task_flow.md)
 - 系统架构图：[docs/system_architecture.md](docs/system_architecture.md)
 - 验收清单：[docs/acceptance_checklist.md](docs/acceptance_checklist.md)

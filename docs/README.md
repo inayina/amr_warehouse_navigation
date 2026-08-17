@@ -28,15 +28,17 @@
    作品集、README、面试讲解可抽取的项目摘要。
 11. [designs/README.md](./designs/README.md)
    WMS 相关设计、计划与演进文档入口。
-12. [container_usage.md](./container_usage.md)
+12. [fleet/README.md](./fleet/README.md)
+   Fleet / EMS 最小调度层文档索引（Stage 1–5 已落地，Stage 6 deferred）。
+13. [container_usage.md](./container_usage.md)
    当前 Docker / devcontainer 轻量开发入口、支持范围与边界说明。
-13. [guides/README.md](./guides/README.md)
+14. [guides/README.md](./guides/README.md)
    WMS 相关手动测试、CLI 说明与操作指南入口。
-14. [reports/README.md](./reports/README.md)
+15. [reports/README.md](./reports/README.md)
    正式验证结果入口。
-15. [logs/README.md](./logs/README.md)
+16. [logs/README.md](./logs/README.md)
    过程日志与诊断记录入口。
-16. [templates/README.md](./templates/README.md)
+17. [templates/README.md](./templates/README.md)
    报告模板入口。
 
 ## 2. 当前主线入口文档
@@ -65,6 +67,8 @@
   作品集提取摘要。
 - [future_architecture.md](./future_architecture.md)
   未来扩展边界，不等同于“已经实现”。
+- [fleet/README.md](./fleet/README.md)
+  Fleet / EMS 最小调度层（Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock）。
 - [container_usage.md](./container_usage.md)
   当前 Docker / devcontainer 入口与本机边界说明。
 

@@ -54,7 +54,8 @@ make test
 
 说明：
 
-- 这条命令已经在 `2026-05-14` 的当前仓库环境中真实跑通，结果为 `63 passed`
+- 这条命令已经在 `2026-08-17` 的当前仓库环境中真实跑通，结果为 `107 passed, 7 skipped`
+- Fleet 集成测试：`python3 -m pytest test/integration/test_fleet_*.py -q`
 - `make test` 会优先使用项目内 `.venv`，如果 `.venv` 不存在，则使用当前 shell 的 `python3`
 
 按 ROS 2 工作空间方式运行：
@@ -88,6 +89,21 @@ colcon test-result --verbose
 
 - `test/integration/test_mock_wms_task_runner.py`
   验证 V3.1 顺序 task runner 的队列消费、失败停止和 continue-on-failure 行为。
+
+- `test/integration/test_fleet_registry.py`
+  验证 Fleet Robot Registry 状态机、双 active task 拒绝与 heartbeat 恢复。
+
+- `test/integration/test_fleet_dispatcher.py`
+  验证 Fleet Dispatcher 静态 cost 分配（Scenarios A–D）。
+
+- `test/integration/test_fleet_haul_lifecycle.py`
+  验证 pickup → dropoff 搬运 FSM 与 WMS / assignment / execution 三套状态分离。
+
+- `test/integration/test_fleet_heartbeat.py`
+  验证 heartbeat 超时 OFFLINE 与取货前 REQUEUED 重分配（Scenario E）。
+
+- `test/integration/test_fleet_resource_lock.py`
+  验证逻辑资源 acquire / release / timeout / lock ordering（Scenarios F/G）。
 
 - `test/scenarios/short_goal_navigation_smoke.md`
   定义一次短距离导航 smoke test 的目标、步骤、指标、通过标准和证据要求。

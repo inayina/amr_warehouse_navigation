@@ -10,11 +10,11 @@
 
 ## 2. 当前状态
 
-截至 `2026-05-14`，当前主线对外统一口径如下：
+截至 `2026-08-17`，当前主线对外统一口径如下：
 
-- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环
-- 当前定位：面向物流机器人任务执行、导航验证、测试验收的项目案例
-- 当前边界：不是完整 WMS，不是多机器人调度系统，不是生产级后端
+- 当前主线：AMR 仓储导航 + 最小 Mock WMS 任务执行闭环 + **opt-in 最小 Fleet / EMS 调度层**（pytest 验证，默认仍为单车 Gazebo / Nav2）
+- 当前定位：面向物流机器人任务执行、导航验证、Fleet 分层学习的项目案例
+- 当前边界：不是完整 WMS，不是生产级多机器人调度平台；Gazebo 双车 demo（Fleet Stage 6）有意 deferred
 
 当前项目状态：
 
@@ -23,9 +23,11 @@
 - V2.2：`config/task_points.yaml`、重复导航证据和 WMS readiness 入口已形成一版可复核基线
 - V3：最小 Mock WMS SQLite 数据层、CLI、executor / task runner 与 HTTP API 已落地
 - V3：live ROS / Nav2 顺序任务执行验证已完成，`station_a` 单条 execute 与 `station_a -> station_b` 顺序 execute 均已拿到真实 `SUCCEEDED`
+- Fleet Stage 1–5：Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock 已落地（见 [fleet/README.md](./fleet/README.md)）
+- Fleet Stage 6：Gazebo / Nav2 双车 **未实施**，blocker 见 [fleet/MULTI_ROBOT_DEMO.md](./fleet/MULTI_ROBOT_DEMO.md)
 - 测试体系已建立 `data / functional / integration / scenarios` 四层结构
 - `pytest test -q` 与 `colcon test --packages-select amr_warehouse_sim` 已接入同一批自动化测试
-- 截至 `2026-05-14` 的最新本地校验，从项目根目录执行 `make test` 的结果为 `63 passed`
+- 截至 `2026-08-17` 的最新本地校验，从项目根目录执行 `python3 -m pytest test -q` 的结果为 `107 passed, 7 skipped`
 - 已形成一份基线测试执行记录：`docs/reports/test_report_2026_05_12.md`
 - 已形成 fixed-task-point、startup stability 和 WMS readiness 的多份补充记录
 - 已补一份 V2.1 / V2.2 收口记录：`docs/reports/v2_validation_closure_2026_05_13.md`
@@ -67,14 +69,26 @@
 - [x] 完成最小 Mock WMS HTTP API `health / create / list / get` 闭环，并保持它只暴露 SQLite 数据层
 - [ ] 如有需要，再单独规划常驻服务 / 更完整调度层，但不并入当前项目主线定位
 
+### P3：Fleet / EMS 最小调度层（Stage 1–5）
+
+- [x] Stage 0：架构审计（[fleet/EMS_FLEET_ARCHITECTURE_AUDIT.md](./fleet/EMS_FLEET_ARCHITECTURE_AUDIT.md)）
+- [x] Stage 1：Robot Registry + 状态机
+- [x] Stage 2：Fleet Dispatcher（静态站点 cost）
+- [x] Stage 3：Pickup → Dropoff 搬运 FSM（三套状态分离）
+- [x] Stage 4：Heartbeat / OFFLINE / 取货前 REQUEUED 重分配
+- [x] Stage 5：Resource Lock（acquire / release / timeout）
+- [x] Stage 7：文档 / README 收口（[fleet/README.md](./fleet/README.md)）
+- [ ] Stage 6：Gazebo / Nav2 双车 demo（opt-in launch，见 [fleet/MULTI_ROBOT_DEMO.md](./fleet/MULTI_ROBOT_DEMO.md)）
+
 ## 4. 下一阶段推荐目标
 
-当前 P0 和 P1 的测试收口已完成，下一阶段继续推进最合理的顺序是：
+当前 P0 和 P1 的测试收口已完成，Fleet Stage 1–5 与 Stage 7 文档收口已完成。下一阶段继续推进最合理的顺序是：
 
 1. 继续观察 fresh-session startup stability，但不再把它作为 V2.1/V2.2 未完成项
 2. 继续沉淀可复核的截图、日志和测试报告
 3. 在不改 Nav2 基线的前提下，继续沉淀更多 business-point execute 重复成功证据
-4. 再做 waypoint / task 配置规范化、更多 business-point execute 证据，以及更正式的任务结果结构化输出
+4. 若需 Gazebo 双车 demo，先按 [fleet/MULTI_ROBOT_DEMO.md](./fleet/MULTI_ROBOT_DEMO.md) 解 blocker，再 opt-in 新 launch
+5. 可选：Fleet HTTP API（`/robots`、`/fleet/assignments`）、Resource lock 接入 haul 执行路径
 
 ## 5. 当前不纳入主线 roadmap 的内容
 
@@ -94,6 +108,7 @@
 
 - 已完成：仓储 AMR 仿真、SLAM、Nav2 稳定基线与固定任务点导航验证
 - 已完成：最小 Mock WMS 任务创建 / 查询 / 执行 / 状态回写闭环
+- 已完成：最小 Fleet / EMS 调度层（Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock）pytest 验证
 - 已完成：自动化测试入口、运行时验证报告与验收文档收口
-- 当前边界：项目案例聚焦任务执行与导航验证，不宣称完整 WMS 或生产调度系统
-- 未来计划：在不破坏导航基线的前提下，继续扩展更正式的任务流与调度边界
+- 当前边界：项目案例聚焦任务执行、导航验证与 Fleet 分层学习，不宣称完整 WMS 或生产调度系统
+- 未来计划：在不破坏导航基线的前提下，可选推进 Gazebo 双车 demo（Stage 6）或 Fleet HTTP API
