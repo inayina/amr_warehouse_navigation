@@ -13,7 +13,7 @@ AMR 仿真导航子系统仓库，面向 Robot Ops Dashboard 提供 Gazebo 仓�
 
 ROS 2 包名仍为 `amr_warehouse_sim`；GitHub 仓库名为 `amr_warehouse_navigation`。当前整理只调整项目说明与文档入口，不改变 launch、Nav2 参数、world 或 robot model 的稳定基线。
 
-最后更新：2026-08-23
+最后更新：2026-08-24
 
 ## 项目定位
 
@@ -72,9 +72,10 @@ flowchart LR
 - V3：最小 Mock WMS SQLite / CLI / executor / task runner / HTTP API 已接入当前主线
 - Fleet Stage 1–5：最小 Robot Registry、Dispatcher、pickup→dropoff 搬运 FSM、heartbeat 重分配、resource lock 已接入（**SimulatedRobotContext + pytest**，不改动 Nav2 / Gazebo 单车基线）
 - Fleet Stage 6：Gazebo / Nav2 双车 demo **有意 deferred**，blocker 见 [docs/fleet/MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md)
-- Experimental vendor integrations：DEEPRobotics DR02 Pro（ROS 2/DDS）、Unitree Go2（CycloneDDS/ROS 2）与 Agibot D1 MaxPro（C++ SDK process boundary）均以 **opt-in、state-only** 实验映射到 Fleet Registry heartbeat。三者不是 concurrent heterogeneous task execution；Agibot 当前只有 SDK/probe compile-link、mock IPC 与 Fleet mapping 证据，没有真机或 command-path 验证。见 [VENDOR_INTEGRATION_COMPARISON.md](docs/fleet/VENDOR_INTEGRATION_COMPARISON.md)
+- Experimental vendor integrations：DEEPRobotics DR02 Pro（ROS 2/DDS）、Unitree Go2（CycloneDDS/ROS 2）与 Agibot D1 MaxPro（C++ SDK process boundary）均以 **opt-in、state-only** 实验映射到 Fleet Registry heartbeat。三者不是 concurrent heterogeneous task execution；当前边界和逐链证据见 [MULTI_VENDOR_ARCHITECTURE.md](docs/fleet/MULTI_VENDOR_ARCHITECTURE.md)，本机验证状态见 [VENDOR_VALIDATION_REPORT.md](docs/fleet/VENDOR_VALIDATION_REPORT.md)。
+- Inspection P0-3：opt-in inspection executor 已复用现有单车 `RosNav2Runtime`，形成 headless Nav2 → mock arrival/stabilization → Mock acquisition → rule → evidence → report 单点闭环；真实 sensor、SQLite metadata、Fleet 与 Platform 尚未接入。
 - 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
-- 截至 `2026-08-23`，本地 `python3 -m pytest test -q` 最新结果为 `135 passed, 7 skipped`
+- 截至 `2026-08-24`，本地 `python3 -m pytest test -q` 最新结果为 `162 passed, 7 skipped`
 
 ## 系统模块
 
@@ -84,6 +85,7 @@ flowchart LR
 - 最小任务执行层：`mock_wms_executor`、`mock_wms_task_runner`
 - 最小 HTTP 入口：`mock_wms_api` 暴露任务创建、查询和最小状态回写
 - Fleet / EMS 调度层（opt-in）：`amr_warehouse_sim/fleet/` — Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock
+- 巡检 P0-3 单车执行链：`amr_warehouse_sim/inspection/` — 现有 Nav2 runtime seam、单点生命周期、Mock Acquisition、Quality、versioned Rule、local JSON Evidence、Finding、Report
 - 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`、`docs/fleet/`
 
 ## 快速启动
@@ -175,6 +177,8 @@ flowchart LR
 | Unitree Go2 state adapter（experimental） | `integrations/unitree/state_adapter.py` | [UNITREE_INTEGRATION.md](docs/fleet/UNITREE_INTEGRATION.md) |
 | Agibot D1 MaxPro process adapter（experimental） | `integrations/agibot/state_adapter.py` | [AGIBOT_INTEGRATION.md](docs/fleet/AGIBOT_INTEGRATION.md) |
 | 三家 vendor architecture 对比 | — | [VENDOR_INTEGRATION_COMPARISON.md](docs/fleet/VENDOR_INTEGRATION_COMPARISON.md) |
+| Multi-vendor state integration architecture / evidence | — | [MULTI_VENDOR_ARCHITECTURE.md](docs/fleet/MULTI_VENDOR_ARCHITECTURE.md) |
+| Vendor validation status | — | [VENDOR_VALIDATION_REPORT.md](docs/fleet/VENDOR_VALIDATION_REPORT.md) |
 | Stage 6 blocker | — | [MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md) |
 
 Fleet 集成测试：
@@ -380,6 +384,9 @@ config/nav2_params_collision_monitor_stage1.yaml
 ## 文档
 
 - 文档索引：[docs/README.md](docs/README.md)
+- 工业巡检 Reference Architecture（P0-2 Mock 数据链已实现；完整巡检系统仍未实现）：[docs/inspection/INSPECTION_SYSTEM_ARCHITECTURE.md](docs/inspection/INSPECTION_SYSTEM_ARCHITECTURE.md)
+- P0-2 Mock pipeline 验证报告：[docs/inspection/P0_2_MOCK_PIPELINE_VALIDATION.md](docs/inspection/P0_2_MOCK_PIPELINE_VALIDATION.md)
+- P0-3 Nav2 executor 验证报告：[docs/inspection/P0_3_NAV2_EXECUTOR_VALIDATION.md](docs/inspection/P0_3_NAV2_EXECUTOR_VALIDATION.md)
 - 求职叙事文档（定位 / 四阶段落地 / 证据与已知问题 / 面试要点）：[docs/portfolio/PROJECT_NARRATIVE.md](docs/portfolio/PROJECT_NARRATIVE.md)
 - 项目 PRD：[docs/prd_mock_wms_task_flow.md](docs/prd_mock_wms_task_flow.md)
 - 系统架构图：[docs/system_architecture.md](docs/system_architecture.md)

@@ -32,6 +32,18 @@
 10. [VENDOR_INTEGRATION_COMPARISON.md](./VENDOR_INTEGRATION_COMPARISON.md)
 
     对比 DR02、Unitree、Agibot 三种外部 architecture，以及真正稳定的 internal liveness contract。
+11. [MULTI_VENDOR_ARCHITECTURE.md](./MULTI_VENDOR_ARCHITECTURE.md)
+
+    三家 vendor 当前 state/liveness integration 的边界、state/command plane 分离与逐边证据标签。
+12. [VENDOR_VALIDATION_REPORT.md](./VENDOR_VALIDATION_REPORT.md)
+
+    本机构建、runtime preflight、模拟器 command safety stop 与 remaining NOT TESTED 的可复核报告。
+13. [HETEROGENEOUS_FLEET_REQUIREMENTS.md](./HETEROGENEOUS_FLEET_REQUIREMENTS.md)
+
+    Brownfield 多品牌机器人统一接入、capability-aware eligibility、evidence threshold 与 Fleet/Platform authority 的需求基线。
+14. [HETEROGENEOUS_FLEET_SYSTEM_CONTEXT.md](./HETEROGENEOUS_FLEET_SYSTEM_CONTEXT.md)
+
+    Actors、State/Execution/Management planes、外部系统与责任矩阵。
 
 ## 阶段状态
 
