@@ -20,6 +20,9 @@ install/
 build/
 log/
 
+# --- 固定的本地 vendor audit / isolated build 产物 ---
+/vendor_audit/
+
 # --- 局部配置文件 ---
 AGENTS.md
 .codex

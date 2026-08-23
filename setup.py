@@ -81,6 +81,8 @@ setup(
             'mock_wms_executor = amr_warehouse_sim.mock_wms_executor:main',
             'mock_wms_task_runner = amr_warehouse_sim.mock_wms_task_runner:main',
             'deep_robotics_state_adapter = amr_warehouse_sim.integrations.deep_robotics.state_adapter:main',
+            'unitree_state_adapter = amr_warehouse_sim.integrations.unitree.state_adapter:main',
+            'agibot_state_adapter = amr_warehouse_sim.integrations.agibot.state_adapter:main',
         ],
     },
 )

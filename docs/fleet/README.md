@@ -23,6 +23,15 @@
 7. [DEEP_ROBOTICS_INTEGRATION.md](./DEEP_ROBOTICS_INTEGRATION.md)
 
    Experimental、opt-in、state-only 的 DR02 Pro ROS 2 telemetry → Fleet heartbeat 实验；不是 DR02 task execution。
+8. [UNITREE_INTEGRATION.md](./UNITREE_INTEGRATION.md)
+
+   Experimental、opt-in、state-only 的 Unitree Go2 CycloneDDS / ROS 2 telemetry → Fleet heartbeat 实验；Jazzy runtime 未验证。
+9. [AGIBOT_INTEGRATION.md](./AGIBOT_INTEGRATION.md)
+
+   Experimental D1 MaxPro C++ SDK probe → JSONL process boundary → Fleet heartbeat；没有真机或控制证据。
+10. [VENDOR_INTEGRATION_COMPARISON.md](./VENDOR_INTEGRATION_COMPARISON.md)
+
+    对比 DR02、Unitree、Agibot 三种外部 architecture，以及真正稳定的 internal liveness contract。
 
 ## 阶段状态
 
@@ -37,6 +46,8 @@
 | 6 | Multi-Robot Gazebo / Nav2 | ❌ 有意 deferred |
 | 7 | 文档 / README 收口 | ✅ |
 | DR02 vendor experiment | `/JOINTS_DATA` → Registry heartbeat | Code / unit / MuJoCo ROS runtime verified；真机未测试 |
+| Unitree vendor experiment | `/lowstate` → Registry heartbeat | Code / unit verified；Jazzy runtime 未验证 |
+| Agibot vendor experiment | C++ SDK probe JSONL → Registry heartbeat | SDK/probe compile-link + mock IPC + unit verified；真机未测试 |
 
 ## 代码入口
 
@@ -70,6 +81,8 @@ python3 -m pytest test -q   # 含 Scenario H 单车 baseline 回归
 | `test_fleet_resource_lock.py` | Scenarios F/G 资源锁 |
 | `test_fleet_execution_context.py` | vendor-neutral execution seam |
 | `test_deep_robotics_state_adapter.py` | vendor telemetry mapping / optional dependency |
+| `test_unitree_state_adapter.py` | Unitree LowState mapping / optional dependency / DR02 parity |
+| `test_agibot_state_adapter.py` | Agibot JSONL process contract / lifecycle / three-vendor parity |
 
 ## 与单车 baseline 的关系
 
