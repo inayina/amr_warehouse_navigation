@@ -1,6 +1,6 @@
 # Fleet / EMS 文档索引
 
-日期：`2026-08-17`
+日期：`2026-08-23`
 
 本目录描述在原有 **单机器人 Mock WMS → Nav2** 闭环之上，新增的最小 Fleet / EMS 调度学习层。
 
@@ -20,6 +20,9 @@
    逻辑资源占用：acquire / release / timeout / lock ordering。
 6. [MULTI_ROBOT_DEMO.md](./MULTI_ROBOT_DEMO.md)  
    Stage 6 未实施：Gazebo / Nav2 双车 blocker 与 opt-in 迁移计划。
+7. [DEEP_ROBOTICS_INTEGRATION.md](./DEEP_ROBOTICS_INTEGRATION.md)
+
+   Experimental、opt-in、state-only 的 DR02 Pro ROS 2 telemetry → Fleet heartbeat 实验；不是 DR02 task execution。
 
 ## 阶段状态
 
@@ -33,6 +36,7 @@
 | 5 | Resource Lock | ✅ |
 | 6 | Multi-Robot Gazebo / Nav2 | ❌ 有意 deferred |
 | 7 | 文档 / README 收口 | ✅ |
+| DR02 vendor experiment | `/JOINTS_DATA` → Registry heartbeat | Code / unit / MuJoCo ROS runtime verified；真机未测试 |
 
 ## 代码入口
 
@@ -64,6 +68,8 @@ python3 -m pytest test -q   # 含 Scenario H 单车 baseline 回归
 | `test_fleet_haul_lifecycle.py` | 搬运 FSM |
 | `test_fleet_heartbeat.py` | Scenario E 重分配 |
 | `test_fleet_resource_lock.py` | Scenarios F/G 资源锁 |
+| `test_fleet_execution_context.py` | vendor-neutral execution seam |
+| `test_deep_robotics_state_adapter.py` | vendor telemetry mapping / optional dependency |
 
 ## 与单车 baseline 的关系
 

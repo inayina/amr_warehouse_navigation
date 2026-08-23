@@ -80,6 +80,7 @@ setup(
             'mock_wms_api = amr_warehouse_sim.mock_wms_api:main',
             'mock_wms_executor = amr_warehouse_sim.mock_wms_executor:main',
             'mock_wms_task_runner = amr_warehouse_sim.mock_wms_task_runner:main',
+            'deep_robotics_state_adapter = amr_warehouse_sim.integrations.deep_robotics.state_adapter:main',
         ],
     },
 )

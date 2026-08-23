@@ -4,6 +4,7 @@ from datetime import datetime
 
 from .assignment import AssignmentStatus
 from .dispatcher import DispatchTask, FleetDispatcher, FleetEvent
+from .execution_context import RobotExecutionContext
 from .registry import RobotRegistry
 from .robot_state import RobotState
 from .simulated_context import SimulatedRobotContext
@@ -30,7 +31,7 @@ class HaulTaskController:
         dispatcher: FleetDispatcher,
         priority: str = 'normal',
         event_sink: list[FleetEvent] | None = None,
-        contexts: dict[str, SimulatedRobotContext] | None = None,
+        contexts: dict[str, RobotExecutionContext] | None = None,
     ):
         if not dropoff_station:
             raise ValueError('Haul tasks require a dropoff_station.')
@@ -70,7 +71,7 @@ class HaulTaskController:
         if fleet_event not in self._event_sink:
             self._event_sink.append(fleet_event)
 
-    def _context_for(self, robot_id: str) -> SimulatedRobotContext:
+    def _context_for(self, robot_id: str) -> RobotExecutionContext:
         if robot_id not in self._contexts:
             self._contexts[robot_id] = SimulatedRobotContext(robot_id, self.registry)
         return self._contexts[robot_id]

@@ -13,7 +13,7 @@ AMR 仿真导航子系统仓库，面向 Robot Ops Dashboard 提供 Gazebo 仓�
 
 ROS 2 包名仍为 `amr_warehouse_sim`；GitHub 仓库名为 `amr_warehouse_navigation`。当前整理只调整项目说明与文档入口，不改变 launch、Nav2 参数、world 或 robot model 的稳定基线。
 
-最后更新：2026-08-17
+最后更新：2026-08-23
 
 ## 项目定位
 
@@ -72,6 +72,7 @@ flowchart LR
 - V3：最小 Mock WMS SQLite / CLI / executor / task runner / HTTP API 已接入当前主线
 - Fleet Stage 1–5：最小 Robot Registry、Dispatcher、pickup→dropoff 搬运 FSM、heartbeat 重分配、resource lock 已接入（**SimulatedRobotContext + pytest**，不改动 Nav2 / Gazebo 单车基线）
 - Fleet Stage 6：Gazebo / Nav2 双车 demo **有意 deferred**，blocker 见 [docs/fleet/MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md)
+- Experimental vendor integration：DR02 Pro MuJoCo `/JOINTS_DATA` → Fleet Registry heartbeat 已完成 code / unit / ROS runtime verification；该入口 **opt-in、state-only**，不是完整异构 task execution，也没有真机或 command-path 验证，见 [DEEP_ROBOTICS_INTEGRATION.md](docs/fleet/DEEP_ROBOTICS_INTEGRATION.md)
 - 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
 - 截至 `2026-08-17`，本地 `python3 -m pytest test -q` 最新结果为 `107 passed, 7 skipped`
 
@@ -170,6 +171,7 @@ flowchart LR
 | 搬运 FSM | `fleet/haul_executor.py` | [TASK_LIFECYCLE.md](docs/fleet/TASK_LIFECYCLE.md) |
 | Heartbeat / 重分配 | `fleet/heartbeat.py` | [TASK_LIFECYCLE.md](docs/fleet/TASK_LIFECYCLE.md) |
 | Resource Lock | `fleet/resources.py` | [RESOURCE_LOCKING.md](docs/fleet/RESOURCE_LOCKING.md) |
+| DR02 Pro state adapter（experimental） | `integrations/deep_robotics/state_adapter.py` | [DEEP_ROBOTICS_INTEGRATION.md](docs/fleet/DEEP_ROBOTICS_INTEGRATION.md) |
 | Stage 6 blocker | — | [MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md) |
 
 Fleet 集成测试：

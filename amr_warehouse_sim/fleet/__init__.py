@@ -17,6 +17,7 @@ from .dispatcher import (
     compute_assignment_cost,
     dispatch_task_from_wms_row,
 )
+from .execution_context import NavigationResult, ReadyResult, RobotExecutionContext
 from .heartbeat import HeartbeatMonitor, HeartbeatSweepItem
 from .haul_executor import HaulTaskController
 from .registry import (
@@ -96,6 +97,8 @@ __all__ = [
     'InvalidRobotTransitionError',
     'WmsTaskStatus',
     'NoAvailableRobotError',
+    'NavigationResult',
+    'ReadyResult',
     'ResourceAcquireResult',
     'ResourceEvent',
     'ResourceLockManager',
@@ -106,6 +109,7 @@ __all__ = [
     'RobotNotAvailableError',
     'RobotNotFoundError',
     'RobotRecord',
+    'RobotExecutionContext',
     'RobotRegistry',
     'RobotState',
     'SimulatedNavigationResult',

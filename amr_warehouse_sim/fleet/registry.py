@@ -320,7 +320,14 @@ class RobotRegistry:
         timestamp: str | None = None,
         current_station: str | None = None,
         battery: float | None = None,
+        recover_offline: bool = True,
     ) -> RobotRecord:
+        """Record liveness, optionally applying the existing OFFLINE recovery policy.
+
+        Vendor telemetry adapters must pass ``recover_offline=False``: receiving a
+        transport frame proves that the data path is alive, but does not establish
+        a Fleet business state such as IDLE.
+        """
         robot = self.get_robot(robot_id)
         ts = timestamp or now_timestamp()
         updated = RobotRecord(
@@ -332,7 +339,7 @@ class RobotRegistry:
             battery=robot.battery if battery is None else battery,
             updated_at=ts,
         )
-        if robot.state == RobotState.OFFLINE:
+        if recover_offline and robot.state == RobotState.OFFLINE:
             if robot.current_task_id is not None:
                 return self.upsert_robot(updated)
             assert_transition_allowed(robot.state, RobotState.IDLE)
