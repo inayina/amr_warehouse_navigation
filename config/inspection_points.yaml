@@ -1,0 +1,39 @@
+# Single-robot Gazebo RGB inspection route.
+# These poses are isolated from config/task_points.yaml and must be confirmed
+# against the actual camera FOV before runtime acceptance is claimed.
+
+cabinet_a:
+  frame_id: map
+  x: -5.3
+  y: -5.8
+  yaw: 3.14
+  sequence: 1
+  inspection_item: rgb
+  image_topic: /inspection/camera/image_raw
+  stabilization_sec: 0.75
+  red_ratio_threshold: 0.20
+  expected_finding: pass
+
+pump_b:
+  frame_id: map
+  x: 5.0
+  y: -4.8
+  yaw: 0.0
+  sequence: 2
+  inspection_item: rgb
+  image_topic: /inspection/camera/image_raw
+  stabilization_sec: 0.75
+  red_ratio_threshold: 0.20
+  expected_finding: warning
+
+panel_c:
+  frame_id: map
+  x: -2.75
+  y: 2.5
+  yaw: 0.0
+  sequence: 3
+  inspection_item: rgb
+  image_topic: /inspection/camera/image_raw
+  stabilization_sec: 0.75
+  red_ratio_threshold: 0.20
+  expected_finding: pass

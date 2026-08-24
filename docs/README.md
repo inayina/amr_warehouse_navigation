@@ -24,21 +24,23 @@
    SLAM、Nav2、AMCL、map_server、planner / controller 的配置关系。
 9. [tuning_log.md](./tuning_log.md)
    footprint、inflation、progress checker、controller 等调参经验。
-10. [portfolio_summary.md](./portfolio_summary.md)
+10. [AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md](./AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md)
+   当前代码审计版面试复习主文档，包含架构、任务链、雷区、题库和规模化并发开发路线。
+11. [portfolio_summary.md](./portfolio_summary.md)
    作品集、README、面试讲解可抽取的项目摘要。
-11. [designs/README.md](./designs/README.md)
+12. [designs/README.md](./designs/README.md)
    WMS 相关设计、计划与演进文档入口。
-12. [fleet/README.md](./fleet/README.md)
+13. [fleet/README.md](./fleet/README.md)
    Fleet / EMS 最小调度层文档索引（Stage 1–5 已落地，Stage 6 deferred）。
-13. [container_usage.md](./container_usage.md)
+14. [container_usage.md](./container_usage.md)
    当前 Docker / devcontainer 轻量开发入口、支持范围与边界说明。
-14. [guides/README.md](./guides/README.md)
+15. [guides/README.md](./guides/README.md)
    WMS 相关手动测试、CLI 说明与操作指南入口。
-15. [reports/README.md](./reports/README.md)
+16. [reports/README.md](./reports/README.md)
    正式验证结果入口。
-16. [logs/README.md](./logs/README.md)
+17. [logs/README.md](./logs/README.md)
    过程日志与诊断记录入口。
-17. [templates/README.md](./templates/README.md)
+18. [templates/README.md](./templates/README.md)
    报告模板入口。
 
 ## 2. 当前主线入口文档
@@ -65,6 +67,8 @@
   footprint、inflation、progress checker、controller 等调参经验。
 - [portfolio_summary.md](./portfolio_summary.md)
   作品集提取摘要。
+- [AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md](./AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md)
+  当前代码事实、面试口述、项目题库、风险边界和并发扩展路线。
 - [future_architecture.md](./future_architecture.md)
   未来扩展边界，不等同于“已经实现”。
 - [fleet/README.md](./fleet/README.md)
@@ -153,7 +157,7 @@
 - [resume-bullets.md](./resume-bullets.md)
   对外展示 / 简历素材。
 - [interview_talking_points.md](./interview_talking_points.md)
-  面试讲项目时可直接复用的结构化提纲。
+  `2026-05-14` 的历史面试提纲；当前复习优先使用 `AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md`。
 - [../artifacts/screenshots/README.md](../artifacts/screenshots/README.md)
   README / 作品集截图素材清单。
 

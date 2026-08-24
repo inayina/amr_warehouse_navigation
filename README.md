@@ -73,9 +73,9 @@ flowchart LR
 - Fleet Stage 1–5：最小 Robot Registry、Dispatcher、pickup→dropoff 搬运 FSM、heartbeat 重分配、resource lock 已接入（**SimulatedRobotContext + pytest**，不改动 Nav2 / Gazebo 单车基线）
 - Fleet Stage 6：Gazebo / Nav2 双车 demo **有意 deferred**，blocker 见 [docs/fleet/MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md)
 - Experimental vendor integrations：DEEPRobotics DR02 Pro（ROS 2/DDS）、Unitree Go2（CycloneDDS/ROS 2）与 Agibot D1 MaxPro（C++ SDK process boundary）均以 **opt-in、state-only** 实验映射到 Fleet Registry heartbeat。三者不是 concurrent heterogeneous task execution；当前边界和逐链证据见 [MULTI_VENDOR_ARCHITECTURE.md](docs/fleet/MULTI_VENDOR_ARCHITECTURE.md)，本机验证状态见 [VENDOR_VALIDATION_REPORT.md](docs/fleet/VENDOR_VALIDATION_REPORT.md)。
-- Inspection P0-3：opt-in inspection executor 已复用现有单车 `RosNav2Runtime`，形成 headless Nav2 → mock arrival/stabilization → Mock acquisition → rule → evidence → report 单点闭环；真实 sensor、SQLite metadata、Fleet 与 Platform 尚未接入。
+- Inspection Reference Scenario：在不修改 warehouse / Nav2 稳定入口的前提下，独立 Gazebo world + inspection robot 已完成三点真实仿真导航、Gazebo RGB ROS Image、arrival 后 fresh-frame、确定性视觉规则、PNG / JSON 与独立 SQLite 闭环；结果为 2 PASS + 1 WARNING，仍不代表真实硬件或 vendor execution。
 - 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
-- 截至 `2026-08-24`，本地 `python3 -m pytest test -q` 最新结果为 `162 passed, 7 skipped`
+- 截至 `2026-08-24`，本地 `python3 -m pytest test -q` 最新结果为 `180 passed, 7 skipped`
 
 ## 系统模块
 
@@ -86,6 +86,7 @@ flowchart LR
 - 最小 HTTP 入口：`mock_wms_api` 暴露任务创建、查询和最小状态回写
 - Fleet / EMS 调度层（opt-in）：`amr_warehouse_sim/fleet/` — Registry、Dispatcher、Haul FSM、Heartbeat、Resource Lock
 - 巡检 P0-3 单车执行链：`amr_warehouse_sim/inspection/` — 现有 Nav2 runtime seam、单点生命周期、Mock Acquisition、Quality、versioned Rule、local JSON Evidence、Finding、Report
+- Gazebo 巡检 reference：`inspection_navigation.launch.py`、`config/inspection_points.yaml`、`run_inspection` — 独立三点 simulated RGB runtime vertical slice
 - 验证与证据层：`test/`、`docs/reports/`、`docs/wms/reports/`、`docs/fleet/`
 
 ## 快速启动
@@ -126,6 +127,16 @@ ros2 run amr_warehouse_sim init_mock_wms_db
 ros2 run amr_warehouse_sim create_mock_task --target station_a
 ros2 run amr_warehouse_sim mock_wms_task_runner --execute --max-tasks 1
 ```
+
+## Inspection Reference Scenario
+
+现有 warehouse / Nav2 baseline 保持不变；独立入口
+`inspection_navigation.launch.py` 使用真实 Gazebo simulated movement、Nav2
+`NavigateToPose` 和 `/inspection/camera/image_raw`，再以确定性 red-pixel rule 生成
+PASS / WARNING、PNG evidence 与 SQLite metadata。它是 single-robot Gazebo reference，
+不是实际工业相机、真实机器人或 vendor execution。复现与严格证据边界见
+[Gazebo Inspection MVP](docs/inspection/GAZEBO_INSPECTION_MVP.md) 和
+[Validation](docs/inspection/GAZEBO_INSPECTION_VALIDATION.md)。
 
 ## 最小运行链路
 
@@ -420,7 +431,8 @@ config/nav2_params_collision_monitor_stage1.yaml
 - Mock WMS executor execute 验证：[docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md](docs/wms/reports/mock_wms_executor_execute_validation_2026_05_13.md)
 - Mock WMS task runner live 验证：[docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md](docs/wms/reports/mock_wms_task_runner_live_validation_2026_05_13.md)
 - 简历版摘要：[docs/resume-bullets.md](docs/resume-bullets.md)
-- 面试讲解提纲：[docs/interview_talking_points.md](docs/interview_talking_points.md)
+- 当前代码审计版面试复习与规模化并发开发指南：[docs/AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md](docs/AMR_INTERVIEW_AND_CONCURRENCY_GUIDE.md)
+- 历史面试讲解提纲：[docs/interview_talking_points.md](docs/interview_talking_points.md)
 - 测试报告模板：[docs/templates/test-report-template.md](docs/templates/test-report-template.md)
 - `collision_monitor` stage1 实验记录：[docs/reports/collision_monitor_stage1_test_report.md](docs/reports/collision_monitor_stage1_test_report.md)
 
