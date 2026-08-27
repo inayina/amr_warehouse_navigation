@@ -13,7 +13,7 @@ AMR 仿真导航子系统仓库，面向 Robot Ops Dashboard 提供 Gazebo 仓�
 
 ROS 2 包名仍为 `amr_warehouse_sim`；GitHub 仓库名为 `amr_warehouse_navigation`。当前整理只调整项目说明与文档入口，不改变 launch、Nav2 参数、world 或 robot model 的稳定基线。
 
-最后更新：2026-08-24
+最后更新：2026-08-27
 
 ## 项目定位
 
@@ -74,8 +74,9 @@ flowchart LR
 - Fleet Stage 6：Gazebo / Nav2 双车 demo **有意 deferred**，blocker 见 [docs/fleet/MULTI_ROBOT_DEMO.md](docs/fleet/MULTI_ROBOT_DEMO.md)
 - Experimental vendor integrations：DEEPRobotics DR02 Pro（ROS 2/DDS）、Unitree Go2（CycloneDDS/ROS 2）与 Agibot D1 MaxPro（C++ SDK process boundary）均以 **opt-in、state-only** 实验映射到 Fleet Registry heartbeat。三者不是 concurrent heterogeneous task execution；当前边界和逐链证据见 [MULTI_VENDOR_ARCHITECTURE.md](docs/fleet/MULTI_VENDOR_ARCHITECTURE.md)，本机验证状态见 [VENDOR_VALIDATION_REPORT.md](docs/fleet/VENDOR_VALIDATION_REPORT.md)。
 - Inspection Reference Scenario：在不修改 warehouse / Nav2 稳定入口的前提下，独立 Gazebo world + inspection robot 已完成三点真实仿真导航、Gazebo RGB ROS Image、arrival 后 fresh-frame、确定性视觉规则、PNG / JSON 与独立 SQLite 闭环；结果为 2 PASS + 1 WARNING，仍不代表真实硬件或 vendor execution。
+- Mobile Manipulation V1：已形成需求、接口、FSM、TF/control ownership、upstream 与 Gate 0–7 验收的 **reference design**；新增 opt-in Gate 1组合描述与控制器组件验证。Gate 2–7仍为 `NOT TESTED`，不代表Nav2、MoveIt、抓取或任务成功。入口见 [docs/mobile_manipulation/README.md](docs/mobile_manipulation/README.md)。
 - 自动化测试已建立 `data / functional / integration / scenarios` 四层结构
-- 截至 `2026-08-24`，本地 `python3 -m pytest test -q` 最新结果为 `180 passed, 7 skipped`
+- 截至 `2026-08-27`，本分支以 `.venv/bin/python -m pytest test -q -p no:cacheprovider` 回归结果为 `187 passed`
 
 ## 系统模块
 
@@ -137,6 +138,12 @@ PASS / WARNING、PNG evidence 与 SQLite metadata。它是 single-robot Gazebo r
 不是实际工业相机、真实机器人或 vendor execution。复现与严格证据边界见
 [Gazebo Inspection MVP](docs/inspection/GAZEBO_INSPECTION_MVP.md) 和
 [Validation](docs/inspection/GAZEBO_INSPECTION_VALIDATION.md)。
+
+## Mobile Manipulation V1 Reference Design
+
+`feature/mobile-manipulation-mvp` 分支新增了 Station A 扫描/取件、STOWED 后移动至 Station B、放置和证据回写的系统级设计。它定义project-owned Mission / Navigation / Manipulation / Perception / Interlock contracts，并规划在ROS 2 Jazzy、Gazebo Harmonic、Nav2、MoveIt 2和ros2_control上按Gate集成。
+
+当前已完成文档设计、upstream reproduction和一个独立的 Gate 1机械臂/夹爪 description/controller variant；尚无 combined-model MoveIt config、Nav2 integration、grasp runtime或Mission implementation，且没有改动现有`navigation.launch.py`稳定入口。完整入口：[Mobile Manipulation V1 docs](docs/mobile_manipulation/README.md)。
 
 ## 最小运行链路
 
@@ -214,6 +221,7 @@ Fleet 文档索引：[docs/fleet/README.md](docs/fleet/README.md)
 - 当前路线图：[docs/roadmap.md](docs/roadmap.md)
 - 文档索引：[docs/README.md](docs/README.md)
 - Fleet / EMS 文档索引：[docs/fleet/README.md](docs/fleet/README.md)
+- Mobile Manipulation V1：[docs/mobile_manipulation/README.md](docs/mobile_manipulation/README.md)（Gate 0/1 scoped `VERIFIED`; Gate 2+ `NOT TESTED`）
 - 测试目录说明：[test/README.md](test/README.md)
 - WMS 验证报告目录：[docs/wms/reports/](docs/wms/reports/)
 - 可视化演示指南：[docs/guides/mock_wms_visual_demo_recording_guide.md](docs/guides/mock_wms_visual_demo_recording_guide.md)

@@ -34,13 +34,15 @@
    Fleet / EMS 最小调度层文档索引（Stage 1–5 已落地，Stage 6 deferred）。
 14. [container_usage.md](./container_usage.md)
    当前 Docker / devcontainer 轻量开发入口、支持范围与边界说明。
-15. [guides/README.md](./guides/README.md)
+15. [mobile_manipulation/README.md](./mobile_manipulation/README.md)
+   Mobile Manipulation V1需求、架构、接口、FSM、upstream与Gate 0–7验收；Gate 0/1有严格范围内的runtime evidence。
+16. [guides/README.md](./guides/README.md)
    WMS 相关手动测试、CLI 说明与操作指南入口。
-16. [reports/README.md](./reports/README.md)
+17. [reports/README.md](./reports/README.md)
    正式验证结果入口。
-17. [logs/README.md](./logs/README.md)
+18. [logs/README.md](./logs/README.md)
    过程日志与诊断记录入口。
-18. [templates/README.md](./templates/README.md)
+19. [templates/README.md](./templates/README.md)
    报告模板入口。
 
 ## 2. 当前主线入口文档
@@ -76,7 +78,24 @@
 - [container_usage.md](./container_usage.md)
   当前 Docker / devcontainer 入口与本机边界说明。
 
-## 3. WMS 设计与计划
+## 3. Mobile Manipulation V1 Reference Design
+
+- [mobile_manipulation/README.md](./mobile_manipulation/README.md)
+  设计文档索引与严格证据状态。
+- [mobile_manipulation/CURRENT_REPOSITORY_AUDIT.md](./mobile_manipulation/CURRENT_REPOSITORY_AUDIT.md)
+  当前HEAD可复用能力、integration seam和保护范围。
+- [mobile_manipulation/REQUIREMENTS.md](./mobile_manipulation/REQUIREMENTS.md)
+  可验证的`MM-REQ-xxx`需求基线。
+- [mobile_manipulation/INTEGRATION_PLAN.md](./mobile_manipulation/INTEGRATION_PLAN.md)
+  Gate 0–7实施顺序、hard stop和风险。
+- [mobile_manipulation/ACCEPTANCE_PLAN.md](./mobile_manipulation/ACCEPTANCE_PLAN.md)
+  requirement-to-evidence追溯和fault injection。
+- [mobile_manipulation/reports/GATE_0_PREFLIGHT_2026-08-27.md](./mobile_manipulation/reports/GATE_0_PREFLIGHT_2026-08-27.md)
+  Gate 0 control-group evidence与UR upstream reproduction。
+
+本节是opt-in未来能力的`REFERENCE DESIGN`，不改变当前AMR/Nav2主线，也不表示机械臂、MoveIt、抓取或完整任务runtime已经实现。
+
+## 4. WMS 设计与计划
 
 这些文件主要描述 WMS 当前边界、设计决策和后续演进方向：
 
@@ -91,7 +110,7 @@
 - [designs/mock_wms_http_api_plan.md](./designs/mock_wms_http_api_plan.md)
   最小 Mock WMS HTTP API 的范围与收口计划。
 
-## 4. 使用与测试指南
+## 5. 使用与测试指南
 
 这些文件更偏操作说明、手工验证和入口解释：
 
@@ -106,7 +125,7 @@
 - [guides/mock_wms_cli_entrypoints_explained.md](./guides/mock_wms_cli_entrypoints_explained.md)
   Mock WMS CLI / executor / task runner 入口桥接说明。
 
-## 5. 阶段测试报告
+## 6. 阶段测试报告
 
 这些文件记录“某一天真实执行过什么、结果如何”，保留事实，不回写改数：
 
@@ -129,7 +148,7 @@
 - [reports/collision_monitor_stage1_test_report.md](./reports/collision_monitor_stage1_test_report.md)
   `collision_monitor` stage1 实验记录。
 
-## 6. 诊断日志
+## 7. 诊断日志
 
 - [logs/README.md](./logs/README.md)
   日志子目录索引。
@@ -142,7 +161,7 @@
 - [logs/repeat_navigation_test_log_2026_05_13_round3.md](./logs/repeat_navigation_test_log_2026_05_13_round3.md)
   重复导航补测日志。
 
-## 7. 模板与辅助说明
+## 8. 模板与辅助说明
 
 这些文件主要服务于后续继续记录和整理，不直接代表当前主线状态：
 
@@ -161,7 +180,7 @@
 - [../artifacts/screenshots/README.md](../artifacts/screenshots/README.md)
   README / 作品集截图素材清单。
 
-## 8. 当前 WMS 主线判断
+## 9. 当前 WMS 主线判断
 
 截至 `2026-05-14`，当前更准确的结论是：
 
@@ -176,7 +195,7 @@
 - 但 fresh-session 下 lifecycle / action readiness 仍存在波动，`shelf_1`、`shelf_2` 也出现过有效前置条件下的 `ABORTED`。
 - 因此，现在适合把 WMS 表述为“主线可引用的最小任务链路能力”，不适合把完整任务执行链路或调度系统宣称为当前主线能力。
 
-## 9. 当前整理策略
+## 10. 当前整理策略
 
 这次整理已经完成主目录物理分层：
 

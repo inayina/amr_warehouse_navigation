@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!--
+  Gate 1 opt-in model. It deliberately does not include models/my_robot or
+  modify the default AMR. Wheel ownership is native Gazebo DiffDrive; only
+  the UR arm and the left gripper driver joint appear in ros2_control.
+-->
+<robot name="mobile_manipulator" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
+  <xacro:include filename="$(find amr_mm_description)/urdf/parallel_gripper.xacro"/>
+
+  <link name="base_link">
+    <visual><geometry><box size="0.72 0.56 0.28"/></geometry><material name="mm_blue"><color rgba="0.05 0.25 0.65 1.0"/></material></visual>
+    <collision><geometry><box size="0.72 0.56 0.28"/></geometry></collision>
+    <inertial><mass value="45.0"/><origin xyz="0 0 0"/><inertia ixx="1.40" ixy="0" ixz="0" iyy="1.80" iyz="0" izz="2.80"/></inertial>
+  </link>
+  <link name="left_wheel"><visual><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.075" length="0.045"/></geometry></visual><collision><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.075" length="0.045"/></geometry></collision><inertial><mass value="0.5"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial></link>
+  <joint name="left_wheel_joint" type="continuous"><parent link="base_link"/><child link="left_wheel"/><origin xyz="0 0.27 -0.10"/><axis xyz="0 1 0"/></joint>
+  <link name="right_wheel"><visual><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.075" length="0.045"/></geometry></visual><collision><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.075" length="0.045"/></geometry></collision><inertial><mass value="0.5"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial></link>
+  <joint name="right_wheel_joint" type="continuous"><parent link="base_link"/><child link="right_wheel"/><origin xyz="0 -0.27 -0.10"/><axis xyz="0 1 0"/></joint>
+  <link name="lidar_link"/>
+  <joint name="base_to_lidar" type="fixed"><parent link="base_link"/><child link="lidar_link"/><origin xyz="0.22 0 0.22" rpy="0 0 0"/></joint>
+  <link name="arm_mount_link">
+    <visual><geometry><cylinder radius="0.14" length="0.12"/></geometry><material name="mm_dark"><color rgba="0.12 0.12 0.15 1.0"/></material></visual>
+    <collision><geometry><cylinder radius="0.14" length="0.12"/></geometry></collision>
+    <inertial><mass value="5.0"/><inertia ixx="0.03" ixy="0" ixz="0" iyy="0.03" iyz="0" izz="0.03"/></inertial>
+  </link>
+  <joint name="base_to_arm_mount" type="fixed"><parent link="base_link"/><child link="arm_mount_link"/><origin xyz="0 0 0.30" rpy="0 0 0"/></joint>
+
+  <!-- Official UR5e chain; arm_ prefix prevents collision with mobile base_link. -->
+  <xacro:ur_robot
+    name="mobile_manipulator"
+    tf_prefix="arm_"
+    parent="arm_mount_link"
+    joint_limits_parameters_file="$(find ur_description)/config/ur5e/joint_limits.yaml"
+    kinematics_parameters_file="$(find ur_description)/config/ur5e/default_kinematics.yaml"
+    physical_parameters_file="$(find ur_description)/config/ur5e/physical_parameters.yaml"
+    visual_parameters_file="$(find ur_description)/config/ur5e/visual_parameters.yaml"
+    safety_limits="true"
+    force_abs_paths="true">
+    <origin xyz="0 0 0.06" rpy="0 0 0"/>
+  </xacro:ur_robot>
+  <!-- UR convention: arm_flange and arm_tool0 are siblings; custom tooling uses flange. -->
+  <xacro:mm_parallel_gripper parent="arm_flange"/>
+
+  <ros2_control name="MMArmGripperSystem" type="system">
+    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <joint name="arm_shoulder_pan_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="arm_shoulder_lift_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="arm_elbow_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="arm_wrist_1_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="arm_wrist_2_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="arm_wrist_3_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+    <joint name="mm_left_finger_joint"><command_interface name="position"/><state_interface name="position"/><state_interface name="velocity"/></joint>
+  </ros2_control>
+
+  <gazebo>
+    <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+      <left_joint>left_wheel_joint</left_joint>
+      <right_joint>right_wheel_joint</right_joint>
+      <wheel_separation>0.54</wheel_separation>
+      <wheel_radius>0.075</wheel_radius>
+      <topic>/cmd_vel</topic>
+      <odom_topic>/odom</odom_topic>
+      <frame_id>odom</frame_id>
+      <child_frame_id>base_link</child_frame_id>
+      <odom_publisher_frequency>30</odom_publisher_frequency>
+    </plugin>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find amr_mm_description)/config/arm_gripper_controllers.yaml</parameters>
+    </plugin>
+  </gazebo>
+</robot>
